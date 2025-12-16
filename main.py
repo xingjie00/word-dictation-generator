@@ -11,7 +11,7 @@ if getattr(sys, 'frozen', False):
     # 打包环境：添加临时解压目录到路径
     sys.path.insert(0, sys._MEIPASS)
 
-from gui.main_window import WordDictationGUI
+from src.gui.main_window import WordDictationGUI
 
 
 def main():

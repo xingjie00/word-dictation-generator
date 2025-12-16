@@ -28,7 +28,7 @@ class WordDictationGUI:
 
         # 加载数据
         try:
-            self.data = load_word_data('words.json')
+            self.data = load_word_data()
             self.units = self.data['units']
         except Exception as e:
             messagebox.showerror("错误", f"加载单词数据失败: {e}")
