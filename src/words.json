@@ -1,0 +1,282 @@
+{
+  "word_list": [
+    {
+      "unit": "Unit 1",
+      "words": [
+        {"word": "future", "translation": "将来；未来"},
+        {"word": "want", "translation": "想要"},
+        {"word": "pilot", "translation": "飞行员"},
+        {"word": "teach", "translation": "教（课）"},
+        {"word": "cook", "translation": "厨师；烹饪"},
+        {"word": "taxi driver", "translation": "出租车司机"},
+        {"word": "job", "translation": "工作；职业"},
+        {"word": "singer", "translation": "歌手"},
+        {"word": "fall", "translation": "掉落；落下"},
+        {"word": "lifeguard", "translation": "救生员"},
+        {"word": "save", "translation": "救；救助；节约"},
+        {"word": "become", "translation": "变成；变得"},
+        {"word": "(be) good at", "translation": "擅长"}
+      ]
+    },
+    {
+      "unit": "Unit 2",
+      "words": [
+        {"word": "by", "translation": "（表示方式）；靠近"},
+        {"word": "walk", "translation": "走；步行"},
+        {"word": "Ms", "translation": "女士"},
+        {"word": "journey", "translation": "旅程；旅行"},
+        {"word": "primary school", "translation": "小学"},
+        {"word": "underground", "translation": "地铁"},
+        {"word": "station", "translation": "车站"},
+        {"word": "take", "translation": "乘坐（交通工具）；带领"},
+        {"word": "after", "translation": "在……后"},
+        {"word": "hour", "translation": "小时"},
+        {"word": "bus stop", "translation": "公共汽车站"},
+        {"word": "by bus", "translation": "乘公共汽车"},
+        {"word": "far from", "translation": "离……远"},
+        {"word": "on foot", "translation": "步行"},
+        {"word": "by bike", "translation": "骑自行车"},
+        {"word": "by car", "translation": "乘小汽车"},
+        {"word": "get off", "translation": "下车"}
+      ]
+    },
+    {
+      "unit": "Unit 3",
+      "words": [
+        {"word": "party", "translation": "聚会"},
+        {"word": "when", "translation": "什么时候"},
+        {"word": "begin", "translation": "开始"},
+        {"word": "bring", "translation": "带来"},
+        {"word": "thing", "translation": "东西；事物"},
+        {"word": "favourite", "translation": "最喜欢的"},
+        {"word": "interesting", "translation": "有趣的"},
+        {"word": "hat", "translation": "帽子"},
+        {"word": "have fun", "translation": "尽情玩"}
+      ]
+    },
+    {
+      "unit": "Unit 4",
+      "words": [
+        {"word": "usually", "translation": "通常"},
+        {"word": "often", "translation": "经常"},
+        {"word": "visit", "translation": "看望；拜访；参观"},
+        {"word": "sometimes", "translation": "有时"},
+        {"word": "always", "translation": "总是；一直"},
+        {"word": "never", "translation": "从不"},
+        {"word": "play sport", "translation": "做运动"},
+        {"word": "go shopping", "translation": "去购物"}
+      ]
+    },
+    {
+      "unit": "Unit 5",
+      "words": [
+        {"word": "clever", "translation": "聪明的"},
+        {"word": "same", "translation": "相同的"},
+        {"word": "class", "translation": "班；班级"},
+        {"word": "both", "translation": "（两个）都"},
+        {"word": "cross", "translation": "穿越；越过"},
+        {"word": "carry", "translation": "背；提；拿"},
+        {"word": "heavy", "translation": "重的；沉的"},
+        {"word": "different", "translation": "不同的"},
+        {"word": "bored", "translation": "无聊的"},
+        {"word": "word", "translation": "单词"},
+        {"word": "easy", "translation": "容易的"},
+        {"word": "say", "translation": "说"},
+        {"word": "then", "translation": "然后；那么"},
+        {"word": "ask", "translation": "问"},
+        {"word": "answer", "translation": "回答"},
+        {"word": "soon", "translation": "很快；不久"},
+        {"word": "each other", "translation": "互相"},
+        {"word": "make phone calls", "translation": "打电话"}
+      ]
+    },
+    {
+      "unit": "Unit 6",
+      "words": [
+        {"word": "life", "translation": "生活"},
+        {"word": "living room", "translation": "客厅"},
+        {"word": "bedroom", "translation": "卧室"},
+        {"word": "model plane", "translation": "飞机模型"},
+        {"word": "kitchen", "translation": "厨房"},
+        {"word": "bathroom", "translation": "浴室；卫生间"},
+        {"word": "their", "translation": "他们的；她们的；它们的"},
+        {"word": "light", "translation": "灯；光"},
+        {"word": "watch", "translation": "观看；观察"},
+        {"word": "TV", "translation": "电视；电视机"},
+        {"word": "before", "translation": "在……以前"},
+        {"word": "bedtime", "translation": "就寝时间"},
+        {"word": "do … homework", "translation": "做家庭作业"},
+        {"word": "turn off", "translation": "关掉"},
+        {"word": "watch TV", "translation": "看电视"},
+        {"word": "tell a story", "translation": "讲故事"}
+      ]
+    },
+    {
+      "unit": "Unit 7",
+      "words": [
+        {"word": "beach", "translation": "海滩"},
+        {"word": "enjoy", "translation": "享受……的乐趣"},
+        {"word": "sunshine", "translation": "阳光"},
+        {"word": "collect", "translation": "收集"},
+        {"word": "shell", "translation": "贝壳"},
+        {"word": "sea", "translation": "海"},
+        {"word": "letter", "translation": "信"},
+        {"word": "put", "translation": "放；安置"},
+        {"word": "know", "translation": "知道"},
+        {"word": "year", "translation": "年岁；年"},
+        {"word": "on holiday", "translation": "度假"},
+        {"word": "have a good time", "translation": "玩得高兴"}
+      ]
+    },
+    {
+      "unit": "Unit 8",
+      "words": [
+        {"word": "outing", "translation": "远足"},
+        {"word": "map", "translation": "地图"},
+        {"word": "hill", "translation": "小山"},
+        {"word": "find", "translation": "发现；找到"},
+        {"word": "diamond", "translation": "钻石"},
+        {"word": "another", "translation": "另一个"},
+        {"word": "lake", "translation": "湖"},
+        {"word": "funny", "translation": "滑稽的；好笑的"},
+        {"word": "hole", "translation": "洞"},
+        {"word": "key", "translation": "钥匙"},
+        {"word": "think", "translation": "想"},
+        {"word": "at the top of", "translation": "在……顶部"},
+        {"word": "get through", "translation": "通过"}
+      ]
+    },
+    {
+      "unit": "Unit 9",
+      "words": [
+        {"word": "post office", "translation": "邮局"},
+        {"word": "quite", "translation": "相当；十分"},
+        {"word": "along", "translation": "沿着；顺着"},
+        {"word": "turn", "translation": "转向；转弯"},
+        {"word": "left", "translation": "左边"},
+        {"word": "straight", "translation": "笔直地"},
+        {"word": "right", "translation": "右边；正确的"},
+        {"word": "between", "translation": "在……中间"},
+        {"word": "flower shop", "translation": "花店"},
+        {"word": "hospital", "translation": "医院"},
+        {"word": "toy shop", "translation": "玩具店"},
+        {"word": "road", "translation": "路；马路"},
+        {"word": "get to", "translation": "到达"}
+      ]
+    },
+    {
+      "unit": "Unit 10",
+      "words": [
+        {"word": "blow", "translation": "刮；吹"},
+        {"word": "gently", "translation": "和缓地；温柔地"},
+        {"word": "softly", "translation": "轻柔地"},
+        {"word": "strongly", "translation": "强劲地"},
+        {"word": "happily", "translation": "快乐地"},
+        {"word": "windmill", "translation": "风车"},
+        {"word": "move", "translation": "(使) 改变位置；移动"},
+        {"word": "slowly", "translation": "缓慢地"},
+        {"word": "quickly", "translation": "快地；迅速地"},
+        {"word": "sound", "translation": "声音；听起来好像"},
+        {"word": "wind-bell", "translation": "风铃"},
+        {"word": "cut", "translation": "剪；砍；切"},
+        {"word": "paper", "translation": "纸；纸张"},
+        {"word": "quiet", "translation": "轻声的；安静的"}
+      ]
+    },
+    {
+      "unit": "Unit 11",
+      "words": [
+        {"word": "tap", "translation": "水龙头"},
+        {"word": "use", "translation": "使用"},
+        {"word": "vegetable", "translation": "蔬菜"},
+        {"word": "clothes", "translation": "衣服；服装"},
+        {"word": "farmer", "translation": "农民"},
+        {"word": "useful", "translation": "有用的"},
+        {"word": "drop", "translation": "滴；水珠"},
+        {"word": "up", "translation": "向上；在上面"},
+        {"word": "shine", "translation": "照耀"},
+        {"word": "over", "translation": "在……上方"},
+        {"word": "mountain", "translation": "山；山脉"},
+        {"word": "tree", "translation": "树"},
+        {"word": "ground", "translation": "地面"},
+        {"word": "inside", "translation": "在……里面"},
+        {"word": "grow crops", "translation": "种庄稼"},
+        {"word": "put out fires", "translation": "灭火"}
+      ]
+    },
+    {
+      "unit": "Unit 12",
+      "words": [
+        {"word": "fire", "translation": "火；火灾"},
+        {"word": "burn", "translation": "燃烧；烧"},
+        {"word": "hurt", "translation": "(使) 受伤"},
+        {"word": "must", "translation": "必须"},
+        {"word": "careful", "translation": "小心的"},
+        {"word": "safety", "translation": "安全"},
+        {"word": "smoke", "translation": "吸烟"},
+        {"word": "match", "translation": "火柴"},
+        {"word": "heat", "translation": "热；高温"},
+        {"word": "hate", "translation": "讨厌"},
+        {"word": "burn down", "translation": "烧毁"},
+        {"word": "(be) careful with", "translation": "当心……"},
+        {"word": "not … at all", "translation": "一点也不……"}
+      ]
+    },
+    {
+      "unit": "原形、过去式、过去分词",
+      "words": [
+        {"word": "shut、shut、shut", "translation": "关"},
+        {"word": "cut、cut、cut", "translation": "割,切"},
+        {"word": "hurt、hurt、hurt", "translation": "损害"},
+        {"word": "put、put、put", "translation": "放"},
+        {"word": "read、read、read", "translation": "读"},
+        {"word": "set、set、set", "translation": "设置"},
+        {"word": "come、came、come", "translation": "来"},
+        {"word": "run、ran、run", "translation": "跑"},
+        {"word": "build、built、built", "translation": "修建"},
+        {"word": "have/has、had、had", "translation": "有吃喝"},
+        {"word": "sit、sat、sat", "translation": "坐"},
+        {"word": "catch、caught、caught", "translation": "抓住"},
+        {"word": "bring、brought、brought", "translation": "带来"},
+        {"word": "sell、sold、sold", "translation": "卖"},
+        {"word": "send、sent、sent", "translation": "发送"},
+        {"word": "feed、fed、fed", "translation": "喂"},
+        {"word": "win、won、won", "translation": "赢"},
+        {"word": "hear、heard、heard", "translation": "听见"},
+        {"word": "say、said、said", "translation": "说"},
+        {"word": "stand、stood、stood", "translation": "站"},
+        {"word": "begin、began、begun", "translation": "开始"},
+        {"word": "shoot、shot、shot", "translation": "射击"},
+        {"word": "leave、left、left", "translation": "离开"},
+        {"word": "drink、drank、drunk", "translation": "喝"},
+        {"word": "go、went、gone", "translation": "去"},
+        {"word": "be、was, were、been", "translation": "是"},
+        {"word": "drive、drove、driven", "translation": "驾驶"},
+        {"word": "speak、spoke、spoken", "translation": "说,讲"},
+        {"word": "swim、swam、swum", "translation": "游泳"},
+        {"word": "ring、rang、rung", "translation": "铃响"},
+        {"word": "write、wrote、written", "translation": "写"},
+        {"word": "draw、drew、drawn", "translation": "画"},
+        {"word": "fly、flew、flown", "translation": "飞"},
+        {"word": "wear、wore、worn", "translation": "穿"},
+        {"word": "throw、threw、thrown", "translation": "扔掉"},
+        {"word": "break、broke、broken", "translation": "打破"},
+        {"word": "forget、forgot、forgotten (forgot)", "translation": "遗忘"},
+        {"word": "hide、hid、hidden", "translation": "藏起来"},
+        {"word": "fall、fell、fallen", "translation": "落下"},
+        {"word": "rise、rose、risen", "translation": "升高"},
+        {"word": "steal、stole、stolen", "translation": "偷"}
+      ]
+    },
+    {
+      "unit": "情态动词原形、过去式",
+      "words": [
+        {"word": "can、could", "translation": "能"},
+        {"word": "may、might", "translation": "可以"},
+        {"word": "will、would", "translation": "将"},
+        {"word": "shall、should", "translation": "应该"},
+        {"word": "must、must", "translation": "必须"}
+      ]
+    }
+  ]
+}
