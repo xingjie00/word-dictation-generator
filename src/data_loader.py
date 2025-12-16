@@ -36,11 +36,11 @@ def get_data_file_path(filename):
         project_root = find_project_root()
         result = os.path.join(project_root, 'resources', filename)
 
-        # 调试信息
-        print(f"🔍 get_data_file_path('{filename}')")
-        print(f"   项目根目录: {project_root}")
-        print(f"   最终路径: {result}")
-        print(f"   文件存在: {os.path.exists(result)}")
+        # # 调试信息
+        # print(f"🔍 get_data_file_path('{filename}')")
+        # print(f"   项目根目录: {project_root}")
+        # print(f"   最终路径: {result}")
+        # print(f"   文件存在: {os.path.exists(result)}")
 
         return result
 
@@ -116,59 +116,59 @@ def save_config(config, config_file=None):
 
 
 # 调试函数
-def debug_project_structure():
-    """调试项目结构"""
-    print("=== 项目结构调试 ===")
-
-    # 查找项目根目录
-    project_root = find_project_root()
-    print(f"找到的项目根目录: {project_root}")
-
-    # 检查目录结构
-    print(f"\n📁 项目根目录内容:")
-    if os.path.exists(project_root):
-        for item in os.listdir(project_root):
-            item_path = os.path.join(project_root, item)
-            if os.path.isdir(item_path):
-                print(f"  📂 {item}/")
-            else:
-                print(f"  📄 {item}")
-
-    # 检查resources目录
-    resources_path = os.path.join(project_root, 'resources')
-    print(f"\n📁 resources 目录: {resources_path}")
-    print(f"   目录存在: {os.path.exists(resources_path)}")
-    if os.path.exists(resources_path):
-        print(f"   目录内容:")
-        for item in os.listdir(resources_path):
-            print(f"    - {item}")
+# def debug_project_structure():
+#     """调试项目结构"""
+#     print("=== 项目结构调试 ===")
+#
+#     # 查找项目根目录
+#     project_root = find_project_root()
+#     print(f"找到的项目根目录: {project_root}")
+#
+#     # 检查目录结构
+#     print(f"\n📁 项目根目录内容:")
+#     if os.path.exists(project_root):
+#         for item in os.listdir(project_root):
+#             item_path = os.path.join(project_root, item)
+#             if os.path.isdir(item_path):
+#                 print(f"  📂 {item}/")
+#             else:
+#                 print(f"  📄 {item}")
+#
+#     # 检查resources目录
+#     resources_path = os.path.join(project_root, 'resources')
+#     print(f"\n📁 resources 目录: {resources_path}")
+#     print(f"   目录存在: {os.path.exists(resources_path)}")
+#     if os.path.exists(resources_path):
+#         print(f"   目录内容:")
+#         for item in os.listdir(resources_path):
+#             print(f"    - {item}")
 
 
 # 如果直接运行此文件，执行调试
-if __name__ == "__main__":
-    debug_project_structure()
-
-    print("\n=== 测试路径函数 ===")
-    # 测试各种文件
-    test_files = ['words.json', 'config.json', 'main.py']
-    for filename in test_files:
-        try:
-            path = get_data_file_path(filename)
-            print(f"\n📁 {filename}:")
-            print(f"   路径: {path}")
-            print(f"   存在: {os.path.exists(path)}")
-        except Exception as e:
-            print(f"\n❌ {filename}: {e}")
-
-    print("\n=== 测试加载功能 ===")
-
-    # 测试加载数据
-    try:
-        word_data = load_word_data()
-        print(f"✅ 加载单词数据成功，共 {len(word_data['units'])} 个单元")
-    except Exception as e:
-        print(f"❌ 加载单词数据失败: {e}")
-
-    # 测试加载配置
-    config = load_config()
-    print(f"✅ 加载配置成功: {config}")
+# if __name__ == "__main__":
+#     debug_project_structure()
+#
+#     print("\n=== 测试路径函数 ===")
+#     # 测试各种文件
+#     test_files = ['words.json', 'config.json', 'main.py']
+#     for filename in test_files:
+#         try:
+#             path = get_data_file_path(filename)
+#             print(f"\n📁 {filename}:")
+#             print(f"   路径: {path}")
+#             print(f"   存在: {os.path.exists(path)}")
+#         except Exception as e:
+#             print(f"\n❌ {filename}: {e}")
+#
+#     print("\n=== 测试加载功能 ===")
+#
+#     # 测试加载数据
+#     try:
+#         word_data = load_word_data()
+#         print(f"✅ 加载单词数据成功，共 {len(word_data['units'])} 个单元")
+#     except Exception as e:
+#         print(f"❌ 加载单词数据失败: {e}")
+#
+#     # 测试加载配置
+#     config = load_config()
+#     print(f"✅ 加载配置成功: {config}")

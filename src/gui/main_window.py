@@ -17,7 +17,7 @@ from src.gui.tabs.settings import SettingsTab
 class WordDictationGUI:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("单词听写生成器 v3.0")
+        self.root.title("单词听写生成器 v1.0")
         self.root.geometry("700x600")
 
         # 窗口关闭时保存配置
