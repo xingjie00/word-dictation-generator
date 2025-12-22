@@ -1,7 +1,1470 @@
 {
   "word_list": [
     {
-      "unit": "Unit 1",
+      "unit": "NCE_Lesson 1",
+      "words": [
+        {"word": "excuse", "translation": "原谅"},
+        {"word": "me", "translation": "我"},
+        {"word": "yes", "translation": "是的"},
+        {"word": "is", "translation": "是"},
+        {"word": "this", "translation": "这"},
+        {"word": "your", "translation": "你的"},
+        {"word": "handbag", "translation": "手提包"},
+        {"word": "pardon", "translation": "请再说一遍"},
+        {"word": "it", "translation": "它"},
+        {"word": "thank you", "translation": "谢谢你"},
+        {"word": "very much", "translation": "非常"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 2",
+      "words": [
+        {"word": "pen", "translation": "钢笔"},
+        {"word": "pencil", "translation": "铅笔"},
+        {"word": "book", "translation": "书"},
+        {"word": "watch", "translation": "手表"},
+        {"word": "coat", "translation": "上衣"},
+        {"word": "dress", "translation": "连衣裙"},
+        {"word": "skirt", "translation": "裙子"},
+        {"word": "shirt", "translation": "衬衫"},
+        {"word": "car", "translation": "小汽车"},
+        {"word": "house", "translation": "房子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 3",
+      "words": [
+        {"word": "umbrella", "translation": "伞"},
+        {"word": "please", "translation": "请"},
+        {"word": "here", "translation": "这里"},
+        {"word": "my", "translation": "我的"},
+        {"word": "ticket", "translation": "票"},
+        {"word": "number", "translation": "号码"},
+        {"word": "five", "translation": "五"},
+        {"word": "sorry", "translation": "对不起"},
+        {"word": "sir", "translation": "先生"},
+        {"word": "cloakroom", "translation": "衣帽间"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 4",
+      "words": [
+        {"word": "suit", "translation": "一套衣服"},
+        {"word": "school", "translation": "学校"},
+        {"word": "teacher", "translation": "老师"},
+        {"word": "son", "translation": "儿子"},
+        {"word": "daughter", "translation": "女儿"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 5",
+      "words": [
+        {"word": "Mr.", "translation": "先生"},
+        {"word": "good", "translation": "好"},
+        {"word": "morning", "translation": "早晨"},
+        {"word": "Miss", "translation": "小姐"},
+        {"word": "new", "translation": "新的"},
+        {"word": "student", "translation": "学生"},
+        {"word": "French", "translation": "法国人"},
+        {"word": "German", "translation": "德国人"},
+        {"word": "nice", "translation": "美好的"},
+        {"word": "meet", "translation": "遇见"},
+        {"word": "Japanese", "translation": "日本人"},
+        {"word": "Korean", "translation": "韩国人"},
+        {"word": "Chinese", "translation": "中国人"},
+        {"word": "too", "translation": "也"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 6",
+      "words": [
+        {"word": "make", "translation": "品牌"},
+        {"word": "Swedish", "translation": "瑞典的"},
+        {"word": "English", "translation": "英国的"},
+        {"word": "American", "translation": "美国的"},
+        {"word": "Italian", "translation": "意大利的"},
+        {"word": "Volvo", "translation": "沃尔沃"},
+        {"word": "Peugeot", "translation": "标致"},
+        {"word": "Mercedes", "translation": "梅赛德斯"},
+        {"word": "Toyota", "translation": "丰田"},
+        {"word": "Daewoo", "translation": "大宇"},
+        {"word": "Mini", "translation": "迷你"},
+        {"word": "Ford", "translation": "福特"},
+        {"word": "Fiat", "translation": "菲亚特"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 7",
+      "words": [
+        {"word": "I", "translation": "我"},
+        {"word": "am", "translation": "是"},
+        {"word": "are", "translation": "是"},
+        {"word": "name", "translation": "名字"},
+        {"word": "what", "translation": "什么"},
+        {"word": "nationality", "translation": "国籍"},
+        {"word": "job", "translation": "工作"},
+        {"word": "keyboard", "translation": "键盘"},
+        {"word": "operator", "translation": "操作员"},
+        {"word": "engineer", "translation": "工程师"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 8",
+      "words": [
+        {"word": "policeman", "translation": "警察"},
+        {"word": "policewoman", "translation": "女警察"},
+        {"word": "taxi driver", "translation": "出租车司机"},
+        {"word": "air hostess", "translation": "空姐"},
+        {"word": "postman", "translation": "邮递员"},
+        {"word": "nurse", "translation": "护士"},
+        {"word": "mechanic", "translation": "机械师"},
+        {"word": "hairdresser", "translation": "理发师"},
+        {"word": "housewife", "translation": "家庭主妇"},
+        {"word": "milkman", "translation": "送奶工"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 9",
+      "words": [
+        {"word": "hello", "translation": "你好"},
+        {"word": "hi", "translation": "嗨"},
+        {"word": "how", "translation": "怎样"},
+        {"word": "today", "translation": "今天"},
+        {"word": "well", "translation": "身体好"},
+        {"word": "fine", "translation": "好的"},
+        {"word": "thanks", "translation": "谢谢"},
+        {"word": "goodbye", "translation": "再见"},
+        {"word": "see", "translation": "看见"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 10",
+      "words": [
+        {"word": "fat", "translation": "胖的"},
+        {"word": "woman", "translation": "女人"},
+        {"word": "thin", "translation": "瘦的"},
+        {"word": "tall", "translation": "高的"},
+        {"word": "short", "translation": "矮的"},
+        {"word": "dirty", "translation": "脏的"},
+        {"word": "clean", "translation": "干净的"},
+        {"word": "hot", "translation": "热的"},
+        {"word": "cold", "translation": "冷的"},
+        {"word": "old", "translation": "老的"},
+        {"word": "young", "translation": "年轻的"},
+        {"word": "busy", "translation": "忙的"},
+        {"word": "lazy", "translation": "懒的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 11",
+      "words": [
+        {"word": "whose", "translation": "谁的"},
+        {"word": "blue", "translation": "蓝色的"},
+        {"word": "perhaps", "translation": "大概"},
+        {"word": "white", "translation": "白色的"},
+        {"word": "catch", "translation": "抓住"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 12",
+      "words": [
+        {"word": "father", "translation": "父亲"},
+        {"word": "mother", "translation": "母亲"},
+        {"word": "blouse", "translation": "女衬衫"},
+        {"word": "sister", "translation": "姐妹"},
+        {"word": "tie", "translation": "领带"},
+        {"word": "brother", "translation": "兄弟"},
+        {"word": "his", "translation": "他的"},
+        {"word": "her", "translation": "她的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 13",
+      "words": [
+        {"word": "colour", "translation": "颜色"},
+        {"word": "green", "translation": "绿色的"},
+        {"word": "come", "translation": "来"},
+        {"word": "upstairs", "translation": "楼上"},
+        {"word": "smart", "translation": "时髦的"},
+        {"word": "hat", "translation": "帽子"},
+        {"word": "same", "translation": "相同的"},
+        {"word": "lovely", "translation": "可爱的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 14",
+      "words": [
+        {"word": "case", "translation": "箱子"},
+        {"word": "carpet", "translation": "地毯"},
+        {"word": "dog", "translation": "狗"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 15",
+      "words": [
+        {"word": "Customs", "translation": "海关"},
+        {"word": "officer", "translation": "官员"},
+        {"word": "girl", "translation": "女孩"},
+        {"word": "Danish", "translation": "丹麦人"},
+        {"word": "friend", "translation": "朋友"},
+        {"word": "Norwegian", "translation": "挪威人"},
+        {"word": "passport", "translation": "护照"},
+        {"word": "brown", "translation": "棕色的"},
+        {"word": "tourist", "translation": "旅游者"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 16",
+      "words": [
+        {"word": "Russian", "translation": "俄罗斯人"},
+        {"word": "Dutch", "translation": "荷兰人"},
+        {"word": "these", "translation": "这些"},
+        {"word": "red", "translation": "红色的"},
+        {"word": "grey", "translation": "灰色的"},
+        {"word": "yellow", "translation": "黄色的"},
+        {"word": "black", "translation": "黑色的"},
+        {"word": "orange", "translation": "橙色的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 17",
+      "words": [
+        {"word": "employee", "translation": "雇员"},
+        {"word": "hard-working", "translation": "勤奋的"},
+        {"word": "sales reps", "translation": "推销员"},
+        {"word": "man", "translation": "男人"},
+        {"word": "office", "translation": "办公室"},
+        {"word": "assistant", "translation": "助手"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 19",
+      "words": [
+        {"word": "matter", "translation": "事情"},
+        {"word": "children", "translation": "孩子们"},
+        {"word": "tired", "translation": "累的"},
+        {"word": "boy", "translation": "男孩"},
+        {"word": "thirsty", "translation": "渴的"},
+        {"word": "mum", "translation": "妈妈"},
+        {"word": "sit down", "translation": "坐下"},
+        {"word": "right", "translation": "好的"},
+        {"word": "ice cream", "translation": "冰淇淋"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 20",
+      "words": [
+        {"word": "big", "translation": "大的"},
+        {"word": "small", "translation": "小的"},
+        {"word": "open", "translation": "开着的"},
+        {"word": "shut", "translation": "关着的"},
+        {"word": "light", "translation": "轻的"},
+        {"word": "heavy", "translation": "重的"},
+        {"word": "long", "translation": "长的"},
+        {"word": "shoe", "translation": "鞋子"},
+        {"word": "grandfather", "translation": "祖父"},
+        {"word": "grandmother", "translation": "祖母"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 21",
+      "words": [
+        {"word": "give", "translation": "给"},
+        {"word": "one", "translation": "一个"},
+        {"word": "which", "translation": "哪一个"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 22",
+      "words": [
+        {"word": "empty", "translation": "空的"},
+        {"word": "full", "translation": "满的"},
+        {"word": "large", "translation": "大的"},
+        {"word": "little", "translation": "小的"},
+        {"word": "sharp", "translation": "锋利的"},
+        {"word": "blunt", "translation": "钝的"},
+        {"word": "box", "translation": "盒子"},
+        {"word": "glass", "translation": "杯子"},
+        {"word": "cup", "translation": "茶杯"},
+        {"word": "bottle", "translation": "瓶子"},
+        {"word": "tin", "translation": "罐头"},
+        {"word": "knife", "translation": "刀子"},
+        {"word": "fork", "translation": "叉子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 23",
+      "words": [
+        {"word": "on", "translation": "在…上"},
+        {"word": "shelf", "translation": "架子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 24",
+      "words": [
+        {"word": "desk", "translation": "课桌"},
+        {"word": "table", "translation": "桌子"},
+        {"word": "plate", "translation": "盘子"},
+        {"word": "cupboard", "translation": "橱柜"},
+        {"word": "cigarette", "translation": "香烟"},
+        {"word": "television", "translation": "电视"},
+        {"word": "floor", "translation": "地板"},
+        {"word": "dressing table", "translation": "梳妆台"},
+        {"word": "magazine", "translation": "杂志"},
+        {"word": "bed", "translation": "床"},
+        {"word": "newspaper", "translation": "报纸"},
+        {"word": "stereo", "translation": "音响"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 25",
+      "words": [
+        {"word": "Mrs.", "translation": "夫人"},
+        {"word": "kitchen", "translation": "厨房"},
+        {"word": "refrigerator", "translation": "冰箱"},
+        {"word": "right", "translation": "右边"},
+        {"word": "electric", "translation": "电的"},
+        {"word": "left", "translation": "左边"},
+        {"word": "cooker", "translation": "炉子"},
+        {"word": "middle", "translation": "中间"},
+        {"word": "of", "translation": "…的"},
+        {"word": "room", "translation": "房间"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 26",
+      "words": [
+        {"word": "where", "translation": "哪里"},
+        {"word": "in", "translation": "在…里"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 27",
+      "words": [
+        {"word": "living room", "translation": "客厅"},
+        {"word": "near", "translation": "靠近"},
+        {"word": "window", "translation": "窗户"},
+        {"word": "armchair", "translation": "扶手椅"},
+        {"word": "door", "translation": "门"},
+        {"word": "picture", "translation": "图片"},
+        {"word": "wall", "translation": "墙"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 28",
+      "words": [
+        {"word": "trousers", "translation": "裤子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 29",
+      "words": [
+        {"word": "shut", "translation": "关闭"},
+        {"word": "bedroom", "translation": "卧室"},
+        {"word": "untidy", "translation": "不整洁的"},
+        {"word": "must", "translation": "必须"},
+        {"word": "open", "translation": "打开"},
+        {"word": "air", "translation": "通风"},
+        {"word": "put", "translation": "放置"},
+        {"word": "clothes", "translation": "衣服"},
+        {"word": "wardrobe", "translation": "衣柜"},
+        {"word": "dust", "translation": "掸灰"},
+        {"word": "sweep", "translation": "扫地"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 30",
+      "words": [
+        {"word": "empty", "translation": "倒空"},
+        {"word": "read", "translation": "阅读"},
+        {"word": "sharpen", "translation": "削尖"},
+        {"word": "put on", "translation": "穿上"},
+        {"word": "take off", "translation": "脱下"},
+        {"word": "turn on", "translation": "打开"},
+        {"word": "turn off", "translation": "关闭"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 31",
+      "words": [
+        {"word": "garden", "translation": "花园"},
+        {"word": "under", "translation": "在…下"},
+        {"word": "tree", "translation": "树"},
+        {"word": "climb", "translation": "爬"},
+        {"word": "who", "translation": "谁"},
+        {"word": "run", "translation": "跑"},
+        {"word": "grass", "translation": "草地"},
+        {"word": "after", "translation": "在…之后"},
+        {"word": "cat", "translation": "猫"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 32",
+      "words": [
+        {"word": "type", "translation": "打字"},
+        {"word": "letter", "translation": "信"},
+        {"word": "basket", "translation": "篮子"},
+        {"word": "eat", "translation": "吃"},
+        {"word": "bone", "translation": "骨头"},
+        {"word": "clean", "translation": "清洁"},
+        {"word": "tooth", "translation": "牙齿"},
+        {"word": "cook", "translation": "烹饪"},
+        {"word": "milk", "translation": "牛奶"},
+        {"word": "meal", "translation": "饭"},
+        {"word": "drink", "translation": "喝"},
+        {"word": "tap", "translation": "水龙头"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 33",
+      "words": [
+        {"word": "day", "translation": "日子"},
+        {"word": "cloud", "translation": "云"},
+        {"word": "sky", "translation": "天空"},
+        {"word": "sun", "translation": "太阳"},
+        {"word": "shine", "translation": "照耀"},
+        {"word": "with", "translation": "和…一起"},
+        {"word": "family", "translation": "家庭"},
+        {"word": "walk", "translation": "走路"},
+        {"word": "over", "translation": "跨越"},
+        {"word": "bridge", "translation": "桥"},
+        {"word": "boat", "translation": "船"},
+        {"word": "river", "translation": "河"},
+        {"word": "ship", "translation": "船"},
+        {"word": "aeroplane", "translation": "飞机"},
+        {"word": "fly", "translation": "飞"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 34",
+      "words": [
+        {"word": "sleep", "translation": "睡觉"},
+        {"word": "shave", "translation": "刮胡子"},
+        {"word": "cry", "translation": "哭"},
+        {"word": "wash", "translation": "洗"},
+        {"word": "wait", "translation": "等待"},
+        {"word": "jump", "translation": "跳"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 35",
+      "words": [
+        {"word": "photograph", "translation": "照片"},
+        {"word": "village", "translation": "村庄"},
+        {"word": "valley", "translation": "山谷"},
+        {"word": "between", "translation": "在…之间"},
+        {"word": "hill", "translation": "小山"},
+        {"word": "another", "translation": "另一个"},
+        {"word": "wife", "translation": "妻子"},
+        {"word": "along", "translation": "沿着"},
+        {"word": "bank", "translation": "河岸"},
+        {"word": "water", "translation": "水"},
+        {"word": "swim", "translation": "游泳"},
+        {"word": "across", "translation": "横穿"},
+        {"word": "building", "translation": "建筑"},
+        {"word": "park", "translation": "公园"},
+        {"word": "into", "translation": "进入"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 36",
+      "words": [
+        {"word": "beside", "translation": "在旁边"},
+        {"word": "off", "translation": "离开"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 37",
+      "words": [
+        {"word": "work", "translation": "工作"},
+        {"word": "hard", "translation": "努力地"},
+        {"word": "make", "translation": "制作"},
+        {"word": "bookcase", "translation": "书架"},
+        {"word": "hammer", "translation": "锤子"},
+        {"word": "paint", "translation": "油漆"},
+        {"word": "pink", "translation": "粉色"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 38",
+      "words": [
+        {"word": "homework", "translation": "作业"},
+        {"word": "listen", "translation": "听"},
+        {"word": "dish", "translation": "盘子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 39",
+      "words": [
+        {"word": "front", "translation": "前面"},
+        {"word": "in front of", "translation": "在…之前"},
+        {"word": "careful", "translation": "小心的"},
+        {"word": "vase", "translation": "花瓶"},
+        {"word": "drop", "translation": "掉落"},
+        {"word": "flower", "translation": "花"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 40",
+      "words": [
+        {"word": "show", "translation": "展示"},
+        {"word": "send", "translation": "发送"},
+        {"word": "take", "translation": "带走"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 41",
+      "words": [
+        {"word": "cheese", "translation": "奶酪"},
+        {"word": "bread", "translation": "面包"},
+        {"word": "soap", "translation": "肥皂"},
+        {"word": "chocolate", "translation": "巧克力"},
+        {"word": "sugar", "translation": "糖"},
+        {"word": "coffee", "translation": "咖啡"},
+        {"word": "tea", "translation": "茶"},
+        {"word": "tobacco", "translation": "烟草"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 42",
+      "words": [
+        {"word": "bird", "translation": "鸟"},
+        {"word": "any", "translation": "任何"},
+        {"word": "some", "translation": "一些"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 43",
+      "words": [
+        {"word": "of course", "translation": "当然"},
+        {"word": "kettle", "translation": "水壶"},
+        {"word": "behind", "translation": "在…后面"},
+        {"word": "teapot", "translation": "茶壶"},
+        {"word": "now", "translation": "现在"},
+        {"word": "find", "translation": "找到"},
+        {"word": "boil", "translation": "沸腾"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 45",
+      "words": [
+        {"word": "can", "translation": "能够"},
+        {"word": "boss", "translation": "老板"},
+        {"word": "minute", "translation": "分钟"},
+        {"word": "ask", "translation": "问"},
+        {"word": "handwriting", "translation": "书写"},
+        {"word": "terrible", "translation": "糟糕的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 46",
+      "words": [
+        {"word": "lift", "translation": "举起"},
+        {"word": "cake", "translation": "蛋糕"},
+        {"word": "biscuit", "translation": "饼干"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 47",
+      "words": [
+        {"word": "like", "translation": "喜欢"},
+        {"word": "want", "translation": "想要"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 48",
+      "words": [
+        {"word": "fresh", "translation": "新鲜的"},
+        {"word": "egg", "translation": "鸡蛋"},
+        {"word": "butter", "translation": "黄油"},
+        {"word": "pure", "translation": "纯净的"},
+        {"word": "honey", "translation": "蜂蜜"},
+        {"word": "ripe", "translation": "成熟的"},
+        {"word": "banana", "translation": "香蕉"},
+        {"word": "jam", "translation": "果酱"},
+        {"word": "sweet", "translation": "甜的"},
+        {"word": "orange", "translation": "橙子"},
+        {"word": "Scotch whisky", "translation": "苏格兰威士忌"},
+        {"word": "choice", "translation": "精选的"},
+        {"word": "apple", "translation": "苹果"},
+        {"word": "wine", "translation": "葡萄酒"},
+        {"word": "beer", "translation": "啤酒"},
+        {"word": "blackboard", "translation": "黑板"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 49",
+      "words": [
+        {"word": "butcher", "translation": "屠夫"},
+        {"word": "meat", "translation": "肉"},
+        {"word": "beef", "translation": "牛肉"},
+        {"word": "lamb", "translation": "羊肉"},
+        {"word": "husband", "translation": "丈夫"},
+        {"word": "steak", "translation": "牛排"},
+        {"word": "mince", "translation": "肉馅"},
+        {"word": "chicken", "translation": "鸡"},
+        {"word": "tell", "translation": "告诉"},
+        {"word": "truth", "translation": "真相"},
+        {"word": "either", "translation": "也"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 50",
+      "words": [
+        {"word": "tomato", "translation": "番茄"},
+        {"word": "potato", "translation": "土豆"},
+        {"word": "cabbage", "translation": "卷心菜"},
+        {"word": "lettuce", "translation": "生菜"},
+        {"word": "pea", "translation": "豌豆"},
+        {"word": "bean", "translation": "豆角"},
+        {"word": "pear", "translation": "梨"},
+        {"word": "grape", "translation": "葡萄"},
+        {"word": "peach", "translation": "桃"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 51",
+      "words": [
+        {"word": "Greece", "translation": "希腊"},
+        {"word": "climate", "translation": "气候"},
+        {"word": "country", "translation": "国家"},
+        {"word": "pleasant", "translation": "宜人的"},
+        {"word": "weather", "translation": "天气"},
+        {"word": "spring", "translation": "春天"},
+        {"word": "windy", "translation": "多风的"},
+        {"word": "warm", "translation": "温暖的"},
+        {"word": "rain", "translation": "下雨"},
+        {"word": "sometimes", "translation": "有时"},
+        {"word": "summer", "translation": "夏天"},
+        {"word": "autumn", "translation": "秋天"},
+        {"word": "winter", "translation": "冬天"},
+        {"word": "snow", "translation": "下雪"},
+        {"word": "January", "translation": "一月"},
+        {"word": "February", "translation": "二月"},
+        {"word": "March", "translation": "三月"},
+        {"word": "April", "translation": "四月"},
+        {"word": "May", "translation": "五月"},
+        {"word": "June", "translation": "六月"},
+        {"word": "July", "translation": "七月"},
+        {"word": "August", "translation": "八月"},
+        {"word": "September", "translation": "九月"},
+        {"word": "October", "translation": "十月"},
+        {"word": "November", "translation": "十一月"},
+        {"word": "December", "translation": "十二月"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 52",
+      "words": [
+        {"word": "the U.S.", "translation": "美国"},
+        {"word": "Brazil", "translation": "巴西"},
+        {"word": "Holland", "translation": "荷兰"},
+        {"word": "England", "translation": "英国"},
+        {"word": "France", "translation": "法国"},
+        {"word": "Germany", "translation": "德国"},
+        {"word": "Italy", "translation": "意大利"},
+        {"word": "Norway", "translation": "挪威"},
+        {"word": "Russia", "translation": "俄罗斯"},
+        {"word": "Spain", "translation": "西班牙"},
+        {"word": "Sweden", "translation": "瑞典"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 53",
+      "words": [
+        {"word": "mild", "translation": "温和的"},
+        {"word": "always", "translation": "总是"},
+        {"word": "north", "translation": "北方"},
+        {"word": "east", "translation": "东方"},
+        {"word": "wet", "translation": "潮湿的"},
+        {"word": "west", "translation": "西方"},
+        {"word": "south", "translation": "南方"},
+        {"word": "season", "translation": "季节"},
+        {"word": "best", "translation": "最好的"},
+        {"word": "night", "translation": "夜晚"},
+        {"word": "rise", "translation": "升起"},
+        {"word": "early", "translation": "早"},
+        {"word": "set", "translation": "落下"},
+        {"word": "late", "translation": "晚"},
+        {"word": "interesting", "translation": "有趣的"},
+        {"word": "subject", "translation": "话题"},
+        {"word": "conversation", "translation": "谈话"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 54",
+      "words": [
+        {"word": "Australia", "translation": "澳大利亚"},
+        {"word": "Australian", "translation": "澳大利亚人"},
+        {"word": "Austria", "translation": "奥地利"},
+        {"word": "Austrian", "translation": "奥地利人"},
+        {"word": "Canada", "translation": "加拿大"},
+        {"word": "Canadian", "translation": "加拿大人"},
+        {"word": "China", "translation": "中国"},
+        {"word": "Finland", "translation": "芬兰"},
+        {"word": "Finnish", "translation": "芬兰人"},
+        {"word": "India", "translation": "印度"},
+        {"word": "Indian", "translation": "印度人"},
+        {"word": "Japan", "translation": "日本"},
+        {"word": "Nigeria", "translation": "尼日利亚"},
+        {"word": "Nigerian", "translation": "尼日利亚人"},
+        {"word": "Turkey", "translation": "土耳其"},
+        {"word": "Turkish", "translation": "土耳其人"},
+        {"word": "Korea", "translation": "韩国"},
+        {"word": "Polish", "translation": "波兰人"},
+        {"word": "Poland", "translation": "波兰"},
+        {"word": "Thai", "translation": "泰国人"},
+        {"word": "Thailand", "translation": "泰国"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 55",
+      "words": [
+        {"word": "live", "translation": "居住"},
+        {"word": "stay", "translation": "停留"},
+        {"word": "home", "translation": "家"},
+        {"word": "housework", "translation": "家务"},
+        {"word": "lunch", "translation": "午餐"},
+        {"word": "afternoon", "translation": "下午"},
+        {"word": "usually", "translation": "通常"},
+        {"word": "together", "translation": "一起"},
+        {"word": "evening", "translation": "晚上"},
+        {"word": "arrive", "translation": "到达"},
+        {"word": "night", "translation": "夜晚"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 57",
+      "words": [
+        {"word": "o'clock", "translation": "点钟"},
+        {"word": "shop", "translation": "商店"},
+        {"word": "moment", "translation": "片刻"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 59",
+      "words": [
+        {"word": "envelope", "translation": "信封"},
+        {"word": "writing paper", "translation": "信纸"},
+        {"word": "shop assistant", "translation": "售货员"},
+        {"word": "size", "translation": "尺寸"},
+        {"word": "pad", "translation": "便笺簿"},
+        {"word": "glue", "translation": "胶水"},
+        {"word": "chalk", "translation": "粉笔"},
+        {"word": "change", "translation": "零钱"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 61",
+      "words": [
+        {"word": "feel", "translation": "感觉"},
+        {"word": "look", "translation": "看起来"},
+        {"word": "must", "translation": "必须"},
+        {"word": "call", "translation": "叫"},
+        {"word": "doctor", "translation": "医生"},
+        {"word": "telephone", "translation": "电话"},
+        {"word": "remember", "translation": "记住"},
+        {"word": "mouth", "translation": "嘴巴"},
+        {"word": "tongue", "translation": "舌头"},
+        {"word": "bad", "translation": "坏的"},
+        {"word": "cold", "translation": "感冒"},
+        {"word": "news", "translation": "消息"},
+        {"word": "headache", "translation": "头痛"},
+        {"word": "aspirin", "translation": "阿司匹林"},
+        {"word": "earache", "translation": "耳痛"},
+        {"word": "toothache", "translation": "牙痛"},
+        {"word": "dentist", "translation": "牙医"},
+        {"word": "stomach ache", "translation": "胃痛"},
+        {"word": "medicine", "translation": "药"},
+        {"word": "temperature", "translation": "温度"},
+        {"word": "flu", "translation": "流感"},
+        {"word": "measles", "translation": "麻疹"},
+        {"word": "mumps", "translation": "腮腺炎"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 63",
+      "words": [
+        {"word": "better", "translation": "更好"},
+        {"word": "certainly", "translation": "当然"},
+        {"word": "get up", "translation": "起床"},
+        {"word": "yet", "translation": "还"},
+        {"word": "rich", "translation": "油腻的"},
+        {"word": "food", "translation": "食物"},
+        {"word": "remain", "translation": "保持"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 64",
+      "words": [
+        {"word": "play", "translation": "玩"},
+        {"word": "match", "translation": "比赛"},
+        {"word": "talk", "translation": "谈话"},
+        {"word": "library", "translation": "图书馆"},
+        {"word": "drive", "translation": "开车"},
+        {"word": "so", "translation": "如此"},
+        {"word": "quickly", "translation": "快地"},
+        {"word": "lean out of", "translation": "探出"},
+        {"word": "break", "translation": "打破"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 65",
+      "words": [
+        {"word": "Dad", "translation": "爸爸"},
+        {"word": "key", "translation": "钥匙"},
+        {"word": "baby", "translation": "婴儿"},
+        {"word": "hear", "translation": "听见"},
+        {"word": "enjoy", "translation": "享受"},
+        {"word": "yourself", "translation": "你自己"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 66",
+      "words": [
+        {"word": "myself", "translation": "我自己"},
+        {"word": "themselves", "translation": "他们自己"},
+        {"word": "himself", "translation": "他自己"},
+        {"word": "herself", "translation": "她自己"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 67",
+      "words": [
+        {"word": "greengrocer", "translation": "蔬果商"},
+        {"word": "absent", "translation": "缺席"},
+        {"word": "Monday", "translation": "星期一"},
+        {"word": "Tuesday", "translation": "星期二"},
+        {"word": "Wednesday", "translation": "星期三"},
+        {"word": "Thursday", "translation": "星期四"},
+        {"word": "keep", "translation": "保持"},
+        {"word": "spend", "translation": "度过"},
+        {"word": "weekend", "translation": "周末"},
+        {"word": "Friday", "translation": "星期五"},
+        {"word": "Saturday", "translation": "星期六"},
+        {"word": "Sunday", "translation": "星期日"},
+        {"word": "country", "translation": "乡村"},
+        {"word": "lucky", "translation": "幸运的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 68",
+      "words": [
+        {"word": "church", "translation": "教堂"},
+        {"word": "dairy", "translation": "乳品店"},
+        {"word": "baker", "translation": "面包师"},
+        {"word": "grocer", "translation": "杂货商"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 69",
+      "words": [
+        {"word": "year", "translation": "年"},
+        {"word": "race", "translation": "比赛"},
+        {"word": "town", "translation": "城镇"},
+        {"word": "crowd", "translation": "人群"},
+        {"word": "stand", "translation": "站立"},
+        {"word": "exciting", "translation": "令人兴奋的"},
+        {"word": "just", "translation": "正好"},
+        {"word": "finish", "translation": "结束"},
+        {"word": "winner", "translation": "获胜者"},
+        {"word": "behind", "translation": "在…之后"},
+        {"word": "way", "translation": "路"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 71",
+      "words": [
+        {"word": "awful", "translation": "糟糕的"},
+        {"word": "telephone", "translation": "打电话"},
+        {"word": "time", "translation": "次数"},
+        {"word": "answer", "translation": "接电话"},
+        {"word": "last", "translation": "上一次"},
+        {"word": "phone", "translation": "电话"},
+        {"word": "again", "translation": "再次"},
+        {"word": "say", "translation": "说"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 73",
+      "words": [
+        {"word": "week", "translation": "周"},
+        {"word": "London", "translation": "伦敦"},
+        {"word": "suddenly", "translation": "突然"},
+        {"word": "bus stop", "translation": "公交站"},
+        {"word": "smile", "translation": "微笑"},
+        {"word": "pleasantly", "translation": "愉快地"},
+        {"word": "understand", "translation": "理解"},
+        {"word": "speak", "translation": "说话"},
+        {"word": "hand", "translation": "手"},
+        {"word": "pocket", "translation": "口袋"},
+        {"word": "phrasebook", "translation": "常用语手册"},
+        {"word": "phrase", "translation": "短语"},
+        {"word": "slowly", "translation": "缓慢地"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 74",
+      "words": [
+        {"word": "hurriedly", "translation": "匆忙地"},
+        {"word": "cut", "translation": "切割"},
+        {"word": "thirstily", "translation": "口渴地"},
+        {"word": "go", "translation": "去"},
+        {"word": "greet", "translation": "问候"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 75",
+      "words": [
+        {"word": "ago", "translation": "以前"},
+        {"word": "buy", "translation": "买"},
+        {"word": "pair", "translation": "一对"},
+        {"word": "fashion", "translation": "时尚"},
+        {"word": "uncomfortable", "translation": "不舒服的"},
+        {"word": "wear", "translation": "穿"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 77",
+      "words": [
+        {"word": "appointment", "translation": "约会"},
+        {"word": "urgent", "translation": "紧急的"},
+        {"word": "till", "translation": "直到"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 79",
+      "words": [
+        {"word": "shopping", "translation": "购物"},
+        {"word": "list", "translation": "清单"},
+        {"word": "vegetable", "translation": "蔬菜"},
+        {"word": "need", "translation": "需要"},
+        {"word": "hope", "translation": "希望"},
+        {"word": "thing", "translation": "事情"},
+        {"word": "money", "translation": "钱"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 80",
+      "words": [
+        {"word": "groceries", "translation": "食品杂货"},
+        {"word": "fruit", "translation": "水果"},
+        {"word": "stationery", "translation": "文具"},
+        {"word": "newsagent", "translation": "报刊亭"},
+        {"word": "chemist", "translation": "药剂师"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 81",
+      "words": [
+        {"word": "bath", "translation": "洗澡"},
+        {"word": "nearly", "translation": "几乎"},
+        {"word": "ready", "translation": "准备好的"},
+        {"word": "dinner", "translation": "晚餐"},
+        {"word": "restaurant", "translation": "餐厅"},
+        {"word": "roast", "translation": "烤的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 82",
+      "words": [
+        {"word": "breakfast", "translation": "早餐"},
+        {"word": "haircut", "translation": "理发"},
+        {"word": "party", "translation": "聚会"},
+        {"word": "holiday", "translation": "假期"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 83",
+      "words": [
+        {"word": "mess", "translation": "混乱"},
+        {"word": "pack", "translation": "打包"},
+        {"word": "suitcase", "translation": "手提箱"},
+        {"word": "leave", "translation": "离开"},
+        {"word": "already", "translation": "已经"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 85",
+      "words": [
+        {"word": "Paris", "translation": "巴黎"},
+        {"word": "cinema", "translation": "电影院"},
+        {"word": "film", "translation": "电影"},
+        {"word": "beautiful", "translation": "美丽的"},
+        {"word": "city", "translation": "城市"},
+        {"word": "never", "translation": "从不"},
+        {"word": "ever", "translation": "曾经"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 87",
+      "words": [
+        {"word": "attendant", "translation": "服务员"},
+        {"word": "bring", "translation": "带来"},
+        {"word": "garage", "translation": "车库"},
+        {"word": "crash", "translation": "碰撞"},
+        {"word": "lamp-post", "translation": "路灯杆"},
+        {"word": "repair", "translation": "修理"},
+        {"word": "try", "translation": "尝试"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 89",
+      "words": [
+        {"word": "believe", "translation": "相信"},
+        {"word": "may", "translation": "可以"},
+        {"word": "how long", "translation": "多久"},
+        {"word": "since", "translation": "自从"},
+        {"word": "why", "translation": "为什么"},
+        {"word": "sell", "translation": "卖"},
+        {"word": "because", "translation": "因为"},
+        {"word": "retire", "translation": "退休"},
+        {"word": "cost", "translation": "花费"},
+        {"word": "pound", "translation": "英镑"},
+        {"word": "worth", "translation": "价值"},
+        {"word": "penny", "translation": "便士"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 91",
+      "words": [
+        {"word": "still", "translation": "仍然"},
+        {"word": "move", "translation": "搬家"},
+        {"word": "miss", "translation": "想念"},
+        {"word": "neighbour", "translation": "邻居"},
+        {"word": "person", "translation": "人"},
+        {"word": "people", "translation": "人们"},
+        {"word": "poor", "translation": "可怜的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 93",
+      "words": [
+        {"word": "pilot", "translation": "飞行员"},
+        {"word": "return", "translation": "返回"},
+        {"word": "New York", "translation": "纽约"},
+        {"word": "Tokyo", "translation": "东京"},
+        {"word": "Madrid", "translation": "马德里"},
+        {"word": "fly", "translation": "飞行"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 94",
+      "words": [
+        {"word": "Athens", "translation": "雅典"},
+        {"word": "Berlin", "translation": "柏林"},
+        {"word": "Bombay", "translation": "孟买"},
+        {"word": "Geneva", "translation": "日内瓦"},
+        {"word": "Moscow", "translation": "莫斯科"},
+        {"word": "Rome", "translation": "罗马"},
+        {"word": "Seoul", "translation": "首尔"},
+        {"word": "Stockholm", "translation": "斯德哥尔摩"},
+        {"word": "Sydney", "translation": "悉尼"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 95",
+      "words": [
+        {"word": "return", "translation": "往返"},
+        {"word": "train", "translation": "火车"},
+        {"word": "platform", "translation": "站台"},
+        {"word": "plenty", "translation": "大量"},
+        {"word": "bar", "translation": "酒吧"},
+        {"word": "station", "translation": "车站"},
+        {"word": "catch", "translation": "赶上"},
+        {"word": "miss", "translation": "错过"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 97",
+      "words": [
+        {"word": "leave", "translation": "遗留"},
+        {"word": "describe", "translation": "描述"},
+        {"word": "zip", "translation": "拉链"},
+        {"word": "label", "translation": "标签"},
+        {"word": "handle", "translation": "把手"},
+        {"word": "address", "translation": "地址"},
+        {"word": "pence", "translation": "便士"},
+        {"word": "belong", "translation": "属于"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 99",
+      "words": [
+        {"word": "ow", "translation": "哎哟"},
+        {"word": "slip", "translation": "滑倒"},
+        {"word": "fall", "translation": "跌倒"},
+        {"word": "downstairs", "translation": "下楼"},
+        {"word": "hurt", "translation": "受伤"},
+        {"word": "back", "translation": "背部"},
+        {"word": "stand up", "translation": "站起来"},
+        {"word": "help", "translation": "帮助"},
+        {"word": "at once", "translation": "立即"},
+        {"word": "sure", "translation": "确定"},
+        {"word": "X-ray", "translation": "X光"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 101",
+      "words": [
+        {"word": "Scotland", "translation": "苏格兰"},
+        {"word": "card", "translation": "卡片"},
+        {"word": "youth", "translation": "青年"},
+        {"word": "hostel", "translation": "青年旅社"},
+        {"word": "association", "translation": "协会"},
+        {"word": "soon", "translation": "不久"},
+        {"word": "write", "translation": "写"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 103",
+      "words": [
+        {"word": "exam", "translation": "考试"},
+        {"word": "pass", "translation": "通过"},
+        {"word": "mathematics", "translation": "数学"},
+        {"word": "question", "translation": "问题"},
+        {"word": "easy", "translation": "容易的"},
+        {"word": "enough", "translation": "足够"},
+        {"word": "paper", "translation": "试卷"},
+        {"word": "fail", "translation": "失败"},
+        {"word": "answer", "translation": "回答"},
+        {"word": "mark", "translation": "分数"},
+        {"word": "rest", "translation": "其余"},
+        {"word": "difficult", "translation": "困难的"},
+        {"word": "hate", "translation": "讨厌"},
+        {"word": "low", "translation": "低的"},
+        {"word": "cheer", "translation": "振作"},
+        {"word": "guy", "translation": "家伙"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 104",
+      "words": [
+        {"word": "clever", "translation": "聪明的"},
+        {"word": "stupid", "translation": "愚蠢的"},
+        {"word": "cheap", "translation": "便宜的"},
+        {"word": "expensive", "translation": "昂贵的"},
+        {"word": "fresh", "translation": "新鲜的"},
+        {"word": "stale", "translation": "不新鲜的"},
+        {"word": "low", "translation": "低的"},
+        {"word": "loud", "translation": "大声的"},
+        {"word": "high", "translation": "高的"},
+        {"word": "hard", "translation": "硬的"},
+        {"word": "sweet", "translation": "甜的"},
+        {"word": "soft", "translation": "软的"},
+        {"word": "sour", "translation": "酸的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 105",
+      "words": [
+        {"word": "spell", "translation": "拼写"},
+        {"word": "intelligent", "translation": "聪明的"},
+        {"word": "mistake", "translation": "错误"},
+        {"word": "present", "translation": "礼物"},
+        {"word": "dictionary", "translation": "字典"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 106",
+      "words": [
+        {"word": "carry", "translation": "携带"},
+        {"word": "correct", "translation": "改正"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 107",
+      "words": [
+        {"word": "madam", "translation": "女士"},
+        {"word": "as well", "translation": "也"},
+        {"word": "suit", "translation": "适合"},
+        {"word": "pretty", "translation": "漂亮的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 109",
+      "words": [
+        {"word": "idea", "translation": "主意"},
+        {"word": "a little", "translation": "一点"},
+        {"word": "teaspoonful", "translation": "一茶匙"},
+        {"word": "less", "translation": "更少"},
+        {"word": "a few", "translation": "几个"},
+        {"word": "pity", "translation": "遗憾"},
+        {"word": "instead", "translation": "代替"},
+        {"word": "advice", "translation": "建议"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 110",
+      "words": [
+        {"word": "most", "translation": "最多的"},
+        {"word": "least", "translation": "最少的"},
+        {"word": "best", "translation": "最好的"},
+        {"word": "worse", "translation": "更差的"},
+        {"word": "worst", "translation": "最差的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 111",
+      "words": [
+        {"word": "model", "translation": "型号"},
+        {"word": "afford", "translation": "负担得起"},
+        {"word": "deposit", "translation": "定金"},
+        {"word": "instalment", "translation": "分期付款"},
+        {"word": "price", "translation": "价格"},
+        {"word": "millionaire", "translation": "百万富翁"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 113",
+      "words": [
+        {"word": "conductor", "translation": "售票员"},
+        {"word": "fare", "translation": "车费"},
+        {"word": "change", "translation": "换钱"},
+        {"word": "note", "translation": "纸币"},
+        {"word": "passenger", "translation": "乘客"},
+        {"word": "none", "translation": "没有"},
+        {"word": "neither", "translation": "也不"},
+        {"word": "get off", "translation": "下车"},
+        {"word": "tramp", "translation": "流浪汉"},
+        {"word": "except", "translation": "除了"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 115",
+      "words": [
+        {"word": "anyone", "translation": "任何人"},
+        {"word": "knock", "translation": "敲"},
+        {"word": "everything", "translation": "一切"},
+        {"word": "quiet", "translation": "安静的"},
+        {"word": "impossible", "translation": "不可能的"},
+        {"word": "invite", "translation": "邀请"},
+        {"word": "anything", "translation": "任何事"},
+        {"word": "nothing", "translation": "无事"},
+        {"word": "lemonade", "translation": "柠檬水"},
+        {"word": "joke", "translation": "玩笑"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 116",
+      "words": [
+        {"word": "asleep", "translation": "睡着的"},
+        {"word": "glasses", "translation": "眼镜"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 117",
+      "words": [
+        {"word": "dining room", "translation": "餐厅"},
+        {"word": "coin", "translation": "硬币"},
+        {"word": "swallow", "translation": "吞下"},
+        {"word": "later", "translation": "后来"},
+        {"word": "toilet", "translation": "厕所"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 118",
+      "words": [
+        {"word": "ring", "translation": "响铃"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 119",
+      "words": [
+        {"word": "story", "translation": "故事"},
+        {"word": "happen", "translation": "发生"},
+        {"word": "thief", "translation": "贼"},
+        {"word": "enter", "translation": "进入"},
+        {"word": "dark", "translation": "黑暗的"},
+        {"word": "torch", "translation": "手电筒"},
+        {"word": "voice", "translation": "声音"},
+        {"word": "parrot", "translation": "鹦鹉"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 120",
+      "words": [
+        {"word": "exercise book", "translation": "练习本"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 121",
+      "words": [
+        {"word": "customer", "translation": "顾客"},
+        {"word": "forget", "translation": "忘记"},
+        {"word": "manager", "translation": "经理"},
+        {"word": "serve", "translation": "服务"},
+        {"word": "counter", "translation": "柜台"},
+        {"word": "recognize", "translation": "认出"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 122",
+      "words": [
+        {"word": "road", "translation": "路"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 123",
+      "words": [
+        {"word": "during", "translation": "在…期间"},
+        {"word": "trip", "translation": "旅行"},
+        {"word": "travel", "translation": "旅行"},
+        {"word": "offer", "translation": "提供"},
+        {"word": "job", "translation": "工作"},
+        {"word": "guess", "translation": "猜"},
+        {"word": "grow", "translation": "生长"},
+        {"word": "beard", "translation": "胡子"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 124",
+      "words": [
+        {"word": "kitten", "translation": "小猫"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 125",
+      "words": [
+        {"word": "water", "translation": "浇水"},
+        {"word": "terribly", "translation": "非常"},
+        {"word": "dry", "translation": "干的"},
+        {"word": "nuisance", "translation": "讨厌的事"},
+        {"word": "mean", "translation": "意思是"},
+        {"word": "surprise", "translation": "惊喜"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 126",
+      "words": [
+        {"word": "immediately", "translation": "立即"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 127",
+      "words": [
+        {"word": "famous", "translation": "著名的"},
+        {"word": "actress", "translation": "女演员"},
+        {"word": "at least", "translation": "至少"},
+        {"word": "actor", "translation": "男演员"},
+        {"word": "read", "translation": "阅读"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 129",
+      "words": [
+        {"word": "wave", "translation": "招手"},
+        {"word": "track", "translation": "跑道"},
+        {"word": "mile", "translation": "英里"},
+        {"word": "overtake", "translation": "超车"},
+        {"word": "speed", "translation": "速度"},
+        {"word": "dream", "translation": "做梦"},
+        {"word": "sign", "translation": "标志"},
+        {"word": "driving licence", "translation": "驾照"},
+        {"word": "charge", "translation": "罚款"},
+        {"word": "darling", "translation": "亲爱的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 131",
+      "words": [
+        {"word": "Egypt", "translation": "埃及"},
+        {"word": "abroad", "translation": "国外"},
+        {"word": "worry", "translation": "担心"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 133",
+      "words": [
+        {"word": "reporter", "translation": "记者"},
+        {"word": "sensational", "translation": "轰动的"},
+        {"word": "mink coat", "translation": "貂皮大衣"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 135",
+      "words": [
+        {"word": "future", "translation": "未来"},
+        {"word": "get married", "translation": "结婚"},
+        {"word": "hotel", "translation": "酒店"},
+        {"word": "latest", "translation": "最新的"},
+        {"word": "introduce", "translation": "介绍"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 137",
+      "words": [
+        {"word": "football", "translation": "足球"},
+        {"word": "pool", "translation": "赌注"},
+        {"word": "win", "translation": "赢"},
+        {"word": "world", "translation": "世界"},
+        {"word": "poor", "translation": "贫穷的"},
+        {"word": "depend", "translation": "依靠"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 139",
+      "words": [
+        {"word": "extra", "translation": "额外的"},
+        {"word": "engineer", "translation": "工程师"},
+        {"word": "overseas", "translation": "海外的"},
+        {"word": "engineering", "translation": "工程"},
+        {"word": "company", "translation": "公司"},
+        {"word": "line", "translation": "线路"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 141",
+      "words": [
+        {"word": "excited", "translation": "兴奋的"},
+        {"word": "get on", "translation": "上车"},
+        {"word": "middle-aged", "translation": "中年的"},
+        {"word": "opposite", "translation": "对面"},
+        {"word": "curiously", "translation": "好奇地"},
+        {"word": "funny", "translation": "有趣的"},
+        {"word": "powder", "translation": "粉"},
+        {"word": "compact", "translation": "粉盒"},
+        {"word": "kindly", "translation": "友好地"},
+        {"word": "ugly", "translation": "丑陋的"},
+        {"word": "amused", "translation": "逗乐的"},
+        {"word": "smile", "translation": "微笑"},
+        {"word": "embarrassed", "translation": "尴尬的"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 142",
+      "words": [
+        {"word": "worried", "translation": "担心的"},
+        {"word": "regularly", "translation": "定期地"}
+      ]
+    },
+    {
+      "unit": "NCE_Lesson 143",
+      "words": [
+        {"word": "surround", "translation": "包围"},
+        {"word": "wood", "translation": "树林"},
+        {"word": "beauty spot", "translation": "景点"},
+        {"word": "hundred", "translation": "百"},
+        {"word": "city", "translation": "城市"},
+        {"word": "through", "translation": "穿过"},
+        {"word": "visitor", "translation": "游客"},
+        {"word": "tidy", "translation": "整洁的"},
+        {"word": "litter", "translation": "垃圾"},
+        {"word": "litter basket", "translation": "垃圾箱"},
+        {"word": "place", "translation": "放置"},
+        {"word": "throw", "translation": "扔"},
+        {"word": "rubbish", "translation": "垃圾"},
+        {"word": "count", "translation": "数"},
+        {"word": "cover", "translation": "覆盖"},
+        {"word": "piece", "translation": "片"},
+        {"word": "tyre", "translation": "轮胎"},
+        {"word": "rusty", "translation": "生锈的"},
+        {"word": "among", "translation": "在…之间"},
+        {"word": "prosecute", "translation": "起诉"}
+      ]
+    },
+    {
+      "unit": "G5_Unit 1",
       "words": [
         {"word": "future", "translation": "将来；未来"},
         {"word": "want", "translation": "想要"},
@@ -19,7 +1482,7 @@
       ]
     },
     {
-      "unit": "Unit 2",
+      "unit": "G5_Unit 2",
       "words": [
         {"word": "by", "translation": "（表示方式）；靠近"},
         {"word": "walk", "translation": "走；步行"},
@@ -41,7 +1504,7 @@
       ]
     },
     {
-      "unit": "Unit 3",
+      "unit": "G5_Unit 3",
       "words": [
         {"word": "party", "translation": "聚会"},
         {"word": "when", "translation": "什么时候"},
@@ -55,7 +1518,7 @@
       ]
     },
     {
-      "unit": "Unit 4",
+      "unit": "G5_Unit 4",
       "words": [
         {"word": "usually", "translation": "通常"},
         {"word": "often", "translation": "经常"},
@@ -68,7 +1531,7 @@
       ]
     },
     {
-      "unit": "Unit 5",
+      "unit": "G5_Unit 5",
       "words": [
         {"word": "clever", "translation": "聪明的"},
         {"word": "same", "translation": "相同的"},
@@ -91,7 +1554,7 @@
       ]
     },
     {
-      "unit": "Unit 6",
+      "unit": "G5_Unit 6",
       "words": [
         {"word": "life", "translation": "生活"},
         {"word": "living room", "translation": "客厅"},
@@ -112,7 +1575,7 @@
       ]
     },
     {
-      "unit": "Unit 7",
+      "unit": "G5_Unit 7",
       "words": [
         {"word": "beach", "translation": "海滩"},
         {"word": "enjoy", "translation": "享受……的乐趣"},
@@ -129,7 +1592,7 @@
       ]
     },
     {
-      "unit": "Unit 8",
+      "unit": "G5_Unit 8",
       "words": [
         {"word": "outing", "translation": "远足"},
         {"word": "map", "translation": "地图"},
@@ -147,7 +1610,7 @@
       ]
     },
     {
-      "unit": "Unit 9",
+      "unit": "G5_Unit 9",
       "words": [
         {"word": "post office", "translation": "邮局"},
         {"word": "quite", "translation": "相当；十分"},
@@ -165,7 +1628,7 @@
       ]
     },
     {
-      "unit": "Unit 10",
+      "unit": "G5_Unit 10",
       "words": [
         {"word": "blow", "translation": "刮；吹"},
         {"word": "gently", "translation": "和缓地；温柔地"},
@@ -184,7 +1647,7 @@
       ]
     },
     {
-      "unit": "Unit 11",
+      "unit": "G5_Unit 11",
       "words": [
         {"word": "tap", "translation": "水龙头"},
         {"word": "use", "translation": "使用"},
@@ -205,7 +1668,7 @@
       ]
     },
     {
-      "unit": "Unit 12",
+      "unit": "G5_Unit 12",
       "words": [
         {"word": "fire", "translation": "火；火灾"},
         {"word": "burn", "translation": "燃烧；烧"},
