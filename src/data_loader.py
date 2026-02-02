@@ -26,23 +26,35 @@ def find_project_root():
 
 
 def get_data_file_path(filename):
-    """获取数据文件路径"""
+    """获取数据文件路径（优先外部，不存在则用内部）"""
+    # 优先级1：exe所在目录的resources文件夹（用户可修改）
     if getattr(sys, 'frozen', False):
-        # 打包环境
-        base_path = sys._MEIPASS
-        return os.path.join(base_path, 'resources', filename)
-    else:
-        # 开发环境
-        project_root = find_project_root()
-        result = os.path.join(project_root, 'resources', filename)
+        exe_dir = os.path.dirname(sys.executable)
+        external_path = os.path.join(exe_dir, 'resources', filename)
 
-        # # 调试信息
-        # print(f"🔍 get_data_file_path('{filename}')")
-        # print(f"   项目根目录: {project_root}")
-        # print(f"   最终路径: {result}")
-        # print(f"   文件存在: {os.path.exists(result)}")
+        # 如果外部文件存在，直接使用
+        if os.path.exists(external_path):
+            # print(f"✅ 使用外部文件: {external_path}")
+            return external_path
 
-        return result
+        # 外部文件不存在，检查内部资源
+        if hasattr(sys, '_MEIPASS'):
+            # 单文件模式：资源在临时目录
+            internal_path = os.path.join(sys._MEIPASS, 'resources', filename)
+            if os.path.exists(internal_path):
+                # print(f"⚠️ 外部文件不存在，使用内部: {internal_path}")
+                return internal_path
+        else:
+            # 文件夹模式
+            internal_path = os.path.join(exe_dir, '_internal', 'resources', filename)
+            if os.path.exists(internal_path):
+                # print(f"⚠️ 外部文件不存在，使用内部: {internal_path}")
+                return internal_path
+
+    # 开发环境或非打包环境
+    project_root = find_project_root()
+    dev_path = os.path.join(project_root, 'resources', filename)
+    return dev_path
 
 
 def load_word_data(json_file=None):
@@ -98,10 +110,15 @@ def load_config(config_file=None):
 
 
 def save_config(config, config_file=None):
-    """保存配置文件"""
+    """保存配置文件（总是保存到外部）"""
     if config_file is None:
-        # 统一使用 get_data_file_path 获取路径
-        config_file = get_data_file_path('config.json')
+        # 总是保存到exe所在目录的resources文件夹
+        if getattr(sys, 'frozen', False):
+            exe_dir = os.path.dirname(sys.executable)
+            config_file = os.path.join(exe_dir, 'resources', 'config.json')
+        else:
+            # 开发环境
+            config_file = get_data_file_path('config.json')
 
     try:
         # 确保目录存在
@@ -115,60 +132,13 @@ def save_config(config, config_file=None):
         return False
 
 
-# 调试函数
-# def debug_project_structure():
-#     """调试项目结构"""
-#     print("=== 项目结构调试 ===")
-#
-#     # 查找项目根目录
-#     project_root = find_project_root()
-#     print(f"找到的项目根目录: {project_root}")
-#
-#     # 检查目录结构
-#     print(f"\n📁 项目根目录内容:")
-#     if os.path.exists(project_root):
-#         for item in os.listdir(project_root):
-#             item_path = os.path.join(project_root, item)
-#             if os.path.isdir(item_path):
-#                 print(f"  📂 {item}/")
-#             else:
-#                 print(f"  📄 {item}")
-#
-#     # 检查resources目录
-#     resources_path = os.path.join(project_root, 'resources')
-#     print(f"\n📁 resources 目录: {resources_path}")
-#     print(f"   目录存在: {os.path.exists(resources_path)}")
-#     if os.path.exists(resources_path):
-#         print(f"   目录内容:")
-#         for item in os.listdir(resources_path):
-#             print(f"    - {item}")
-
-
-# 如果直接运行此文件，执行调试
-# if __name__ == "__main__":
-#     debug_project_structure()
-#
-#     print("\n=== 测试路径函数 ===")
-#     # 测试各种文件
-#     test_files = ['words.json', 'config.json', 'main.py']
-#     for filename in test_files:
-#         try:
-#             path = get_data_file_path(filename)
-#             print(f"\n📁 {filename}:")
-#             print(f"   路径: {path}")
-#             print(f"   存在: {os.path.exists(path)}")
-#         except Exception as e:
-#             print(f"\n❌ {filename}: {e}")
-#
-#     print("\n=== 测试加载功能 ===")
-#
-#     # 测试加载数据
-#     try:
-#         word_data = load_word_data()
-#         print(f"✅ 加载单词数据成功，共 {len(word_data['units'])} 个单元")
-#     except Exception as e:
-#         print(f"❌ 加载单词数据失败: {e}")
-#
-#     # 测试加载配置
-#     config = load_config()
-#     print(f"✅ 加载配置成功: {config}")
+def get_resource_folder():
+    """获取资源文件夹路径"""
+    if getattr(sys, 'frozen', False):
+        # 打包环境：返回exe所在目录的resources文件夹
+        exe_dir = os.path.dirname(sys.executable)
+        return os.path.join(exe_dir, 'resources')
+    else:
+        # 开发环境
+        project_root = find_project_root()
+        return os.path.join(project_root, 'resources')
