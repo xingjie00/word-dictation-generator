@@ -11,7 +11,13 @@ def clean_build():
     folders = ['build', 'dist']
     for folder in folders:
         if os.path.exists(folder):
-            shutil.rmtree(folder)
+            try:
+                shutil.rmtree(folder)
+            except PermissionError:
+                # 常见原因：上次构建的 exe 还在运行，Windows 不允许删除
+                print(f"❌ 无法删除 {folder}：请先关闭正在运行的「单词听写生成器.exe」")
+                print("   （任务管理器中结束该进程后重试）")
+                sys.exit(1)
             print(f"  已删除: {folder}")
 
 
