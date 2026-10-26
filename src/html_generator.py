@@ -177,11 +177,11 @@ def generate_day_page(plan: DayPlan) -> str:
             <table>
                 <thead>
                     <tr>
-                        <th width="10%">序号</th>
+                        <th width="5%">序号</th>
                         <th width="30%">英文单词</th>
-                        <th width="30%">中文释义</th>
-                        <th width="15%">单元</th>
-                        <th width="15%">更正</th>
+                        <th width="25%">中文释义</th>
+                        <th width="20%">单元</th>
+                        <th width="20%">更正</th>
                     </tr>
                 </thead>
                 <tbody>
