@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('resources', 'resources')],
+    datas=[('resources/words.json', 'resources')],
     hiddenimports=['src.data_loader', 'src.db', 'src.word_selector', 'src.html_generator', 'src.gui.main_window', 'src.gui.tabs.unit_selection', 'src.gui.tabs.settings', 'src.gui.tabs.word_library'],
     hookspath=[],
     hooksconfig={},

@@ -30,7 +30,8 @@ def run_pyinstaller():
         "--onefile",
         "--windowed",
         f"--name=单词听写生成器",
-        "--add-data=resources;resources",
+        # 只内置 words.json 种子（删 words.db 后的重置来源）；words.db 走外部随包分发
+        "--add-data=resources/words.json;resources",
         "--hidden-import=src.data_loader",
         "--hidden-import=src.db",
         "--hidden-import=src.word_selector",
@@ -58,6 +59,16 @@ def run_pyinstaller():
     return True
 
 
+def ensure_word_db():
+    """确保 resources/words.db 存在（缺失时从 words.json 种子生成）。"""
+    print("🗄️ 检查词库数据库...")
+    import src.db
+    quarantine = src.db.init_db()
+    if quarantine:
+        print(f"  ⚠️ 开发词库损坏，已备份为 {os.path.basename(quarantine)} 并从种子重建")
+    print("  ✅ resources/words.db 就绪")
+
+
 def organize_distribution():
     """整理发布文件结构"""
     print("📂 整理文件结构...")
@@ -79,12 +90,14 @@ def organize_distribution():
             shutil.rmtree(resources_target)
 
         print(f"  复制resources文件夹到dist目录...")
-        # 排除开发期的 SQLite 词库：发布包只带种子，用户首次运行自动生成
+        # words.db 随包分发（当前词库开箱即用）；words.json 不放外部
+        # （初始种子已内置 exe，作为删除 words.db 后的重置来源）
         shutil.copytree(resources_source, resources_target,
-                        ignore=shutil.ignore_patterns('words.db*'))
+                        ignore=shutil.ignore_patterns('words.json',
+                                                      'words.db.corrupt-*'))
 
         # 检查关键文件
-        required_files = ['config.json', 'words.json']
+        required_files = ['config.json', 'words.db']
         for file in required_files:
             file_path = os.path.join(resources_target, file)
             if not os.path.exists(file_path):
@@ -99,7 +112,7 @@ def organize_distribution():
     print(f"     - 单词听写生成器.exe")
     print(f"     - resources/ 文件夹")
     print(f"       ├── config.json")
-    print(f"       └── words.json")
+    print(f"       └── words.db")
 
     return True
 
@@ -110,18 +123,16 @@ def create_readme():
 
 ## 使用方法
 1. 双击运行 `单词听写生成器.exe`
-2. 首次启动会自动从 resources/words.json 导入词库，生成 resources/words.db
-3. 在界面中选择单元和设置参数，点击"生成HTML听写文档"或"预览"
+2. 在界面中选择单元和设置参数，点击"生成HTML听写文档"或"预览"
 
 ## 文件说明
 - `resources/config.json`: 程序配置（界面参数会自动保存）
-- `resources/words.json`: 初始词库种子（仅在 words.db 缺失时使用）
-- `resources/words.db`:   词库数据库（首次运行自动生成）
+- `resources/words.db`:   词库数据库（随包提供，开箱即用）
 
 ## 词库维护
 - 添加单词：用程序内"词库管理"标签页，保存后即时生效
-- 重置词库：删除 resources/words.db 后重启程序，将重新从 words.json 导入
-- 直接编辑 words.json 不会影响已生成的 words.db
+- 批量导入：词库管理标签页可粘贴或从 .txt 文件导入词表（每行"英文 释义"）
+- 重置词库：删除 resources/words.db 后重启程序，将从内置初始词库重建
 
 ## 技术支持
 如有问题，请联系开发者。
@@ -143,15 +154,18 @@ def main():
     # 1. 清理
     clean_build()
 
-    # 2. 打包
+    # 2. 确保词库数据库存在（随包分发的数据源）
+    ensure_word_db()
+
+    # 3. 打包
     if not run_pyinstaller():
         return
 
-    # 3. 整理文件
+    # 4. 整理文件
     if not organize_distribution():
         return
 
-    # 4. 创建说明文件
+    # 5. 创建说明文件
     create_readme()
 
     print("\n🎉 构建完成！")
@@ -160,11 +174,11 @@ def main():
     print(f"├── 单词听写生成器.exe")
     print(f"├── resources/")
     print(f"│   ├── config.json")
-    print(f"│   └── words.json  (words.db 由用户首次运行时自动生成)")
+    print(f"│   └── words.db    (当前词库，随包提供)")
     print(f"└── README.txt")
     print("=" * 50)
 
-    # 5. 可选：打开文件夹
+    # 6. 可选：打开文件夹
     open_folder = input("\n是否打开dist文件夹？(y/n): ").lower()
     if open_folder == 'y':
         if sys.platform == 'win32':
