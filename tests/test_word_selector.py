@@ -1,8 +1,10 @@
 # tests/test_word_selector.py
 import random
+from collections import Counter
+
 import pytest
 
-from src.word_selector import select_words, SelectionError, WordEntry, DayPlan, _build_pool
+from src.word_selector import select_words, SelectionError
 
 SAMPLE_DATA = {
     'units': ['U1', 'U2', 'U3'],
@@ -26,11 +28,85 @@ def test_dedup_same_word_different_translation():
     assert words.count('right') <= 1
 
 
-def test_build_pool_first_translation_wins():
-    """_build_pool 中同一单词首次出现的释义胜出。"""
-    pool = _build_pool(SAMPLE_DATA, ['U1', 'U2'])
-    right_entry = next(w for w in pool if w.word == 'right')
-    assert right_entry.translation == '好的'  # U1 的释义
+def test_translation_matches_unit():
+    """共享词的释义与所归属的单元一致（抽到哪个单元就用哪个单元的释义）。"""
+    plans = select_words(
+        SAMPLE_DATA, [], ['U1', 'U2'],
+        focus_count=0, review_count=2, days=1,
+        rng=random.Random(0)
+    )
+    for w in plans[0].review_words:
+        if w.word == 'right':
+            expected = '好的' if w.unit == 'U1' else '右边'
+            assert w.translation == expected
+
+
+def test_two_stage_all_units_represented():
+    """名额 ≥ 单元数时，每个选中单元当天都至少贡献 1 词。"""
+    data = {
+        'units': ['U1', 'U2', 'U3'],
+        'unit_words': {
+            f'U{i}': [{'word': f'u{i}w{j}', 'translation': f'词{i}-{j}'}
+                      for j in range(5)]
+            for i in range(1, 4)
+        },
+        'word_list': []
+    }
+    plans = select_words(data, [], ['U1', 'U2', 'U3'],
+                         0, 15, 1, rng=random.Random(3))
+    words = [w.word for w in plans[0].review_words]
+    units_seen = {w.unit for w in plans[0].review_words}
+    assert units_seen == {'U1', 'U2', 'U3'}
+    assert len(words) == len(set(words)) == 15  # 无重复且填满
+
+
+def test_two_stage_weighted_favor_large_unit():
+    """剩余名额按单元词量加权：大单元贡献显著更多。"""
+    data = {
+        'units': ['A', 'B'],
+        'unit_words': {
+            'A': [{'word': f'a{i}', 'translation': f'甲{i}'} for i in range(20)],
+            'B': [{'word': f'b{i}', 'translation': f'乙{i}'} for i in range(2)],
+        },
+        'word_list': []
+    }
+    plans = select_words(data, [], ['A', 'B'], 0, 12, 1, rng=random.Random(5))
+    counts = Counter(w.unit for w in plans[0].review_words)
+    assert counts['A'] >= 10  # B 全部仅 2 词，A 至少分得 10 个名额
+
+
+def test_two_stage_fewer_slots_than_units():
+    """名额 < 单元数时，随机选取部分单元、各贡献 1 词。"""
+    data = {
+        'units': ['U1', 'U2', 'U3'],
+        'unit_words': {
+            f'U{i}': [{'word': f'u{i}w{j}', 'translation': f'词{i}-{j}'}
+                      for j in range(4)]
+            for i in range(1, 4)
+        },
+        'word_list': []
+    }
+    plans = select_words(data, [], ['U1', 'U2', 'U3'],
+                         0, 2, 1, rng=random.Random(11))
+    counts = Counter(w.unit for w in plans[0].review_words)
+    assert len(counts) == 2 and all(v == 1 for v in counts.values())
+
+
+def test_shared_words_spread_across_units():
+    """两个单元含完全相同的词：每词整周期仅一次，但两个单元都获得名额归属。"""
+    data = {
+        'units': ['S', 'T'],
+        'unit_words': {
+            'S': [{'word': w, 'translation': f'S-{w}'} for w in ('a', 'b', 'c')],
+            'T': [{'word': w, 'translation': f'T-{w}'} for w in ('a', 'b', 'c')],
+        },
+        'word_list': []
+    }
+    plans = select_words(data, [], ['S', 'T'], 0, 3, 1, rng=random.Random(2))
+    words = [w.word for w in plans[0].review_words]
+    units_seen = {w.unit for w in plans[0].review_words}
+    assert sorted(words) == ['a', 'b', 'c']  # 每词恰好一次
+    assert units_seen == {'S', 'T'}  # 不再被首个单元垄断
 
 
 def test_insufficient_focus_raises():
