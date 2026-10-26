@@ -76,7 +76,7 @@ def test_two_stage_weighted_favor_large_unit():
 
 
 def test_two_stage_fewer_slots_than_units():
-    """名额 < 单元数时，随机选取部分单元、各贡献 1 词。"""
+    """名额 < 单元数时，名额随机集中到部分单元（不保底，允许集中）。"""
     data = {
         'units': ['U1', 'U2', 'U3'],
         'unit_words': {
@@ -88,8 +88,10 @@ def test_two_stage_fewer_slots_than_units():
     }
     plans = select_words(data, [], ['U1', 'U2', 'U3'],
                          0, 2, 1, rng=random.Random(11))
-    counts = Counter(w.unit for w in plans[0].review_words)
-    assert len(counts) == 2 and all(v == 1 for v in counts.values())
+    words = [w.word for w in plans[0].review_words]
+    units_seen = {w.unit for w in plans[0].review_words}
+    assert len(words) == len(set(words)) == 2  # 当天无重复
+    assert units_seen <= {'U1', 'U2', 'U3'}
 
 
 def test_shared_words_spread_across_units():
@@ -124,10 +126,10 @@ def test_insufficient_review_raises():
 
 
 def test_cross_pool_depletion_raises():
-    """focus 消耗共享词后 review 不足 → 每日检查抛 SelectionError。"""
+    """focus 当天占用共享词后 review 不足 → 当日检查抛 SelectionError。"""
     # 构造数据：focus 与 review 共享词 'right'
     # focus_pool = {apple, right}; review_pool = {right, book}
-    # focus 2/day × 1 day 消耗 apple + right; review 需 2 但只剩 book = 1
+    # focus 当天消耗 apple + right; review 需 2 但当天只剩 book = 1
     data = {
         'units': ['F1', 'R1'],
         'unit_words': {
@@ -138,6 +140,26 @@ def test_cross_pool_depletion_raises():
     }
     with pytest.raises(SelectionError):
         select_words(data, ['F1'], ['R1'], focus_count=2, review_count=2, days=1)
+
+
+def test_focus_review_same_day_disjoint():
+    """同一天内重点与复习不重复：重点当天选走的词，复习不再出现。"""
+    data = {
+        'units': ['F1', 'R1'],
+        'unit_words': {
+            'F1': [{'word': 'fx', 'translation': '甲'}, {'word': 'fy', 'translation': '乙'}],
+            'R1': [{'word': 'fx', 'translation': '甲'}, {'word': 'r1', 'translation': '丙'},
+                   {'word': 'r2', 'translation': '丁'}],
+        },
+        'word_list': []
+    }
+    plans = select_words(data, ['F1'], ['R1'],
+                         focus_count=2, review_count=2, days=1,
+                         rng=random.Random(0))
+    day_words = ([w.word for w in plans[0].focus_words]
+                 + [w.word for w in plans[0].review_words])
+    assert len(day_words) == len(set(day_words)) == 4  # 当天全不重复
+    assert 'fx' not in [w.word for w in plans[0].review_words]
 
 
 def test_seed_reproducibility():
@@ -158,14 +180,22 @@ def test_focus_review_separation():
     assert len(plans[0].review_words) == 1 and plans[0].review_words[0].unit == 'U3'
 
 
-def test_no_repeat_across_days():
-    """3 天 × 1 词 → 所有词无重复。"""
-    plans = select_words(
-        SAMPLE_DATA, [], ['U1', 'U2', 'U3'],
-        0, 1, 3, rng=random.Random(1)
-    )
+def test_within_day_unique_cross_day_repeat_allowed():
+    """当天不重复；跨天允许重复——池小于总需求时也照常生成。"""
+    data = {
+        'units': ['R'],
+        'unit_words': {
+            'R': [{'word': f'r{i}', 'translation': f'词{i}'} for i in range(4)],
+        },
+        'word_list': []
+    }
+    # 池仅 4 词，3 天 × 4 词/天 = 12 次抽取必然跨天重复，但不应报错
+    plans = select_words(data, [], ['R'], 0, 4, 3, rng=random.Random(1))
+    for p in plans:
+        words = [w.word for w in p.review_words]
+        assert len(words) == len(set(words)) == 4  # 每天内部无重复
     all_words = [w.word for p in plans for w in p.review_words]
-    assert len(all_words) == len(set(all_words))
+    assert len(all_words) == 12 and len(set(all_words)) == 4  # 跨天重复发生
 
 
 def test_zero_counts_ok():
@@ -175,7 +205,7 @@ def test_zero_counts_ok():
 
 
 def test_multi_day_with_focus():
-    """多天 + 重点 + 复习，跨天无重复。"""
+    """多天 + 重点 + 复习：每天内部无重复，数量正确。"""
     data = {
         'units': ['A', 'B'],
         'unit_words': {
@@ -185,9 +215,9 @@ def test_multi_day_with_focus():
         'word_list': []
     }
     plans = select_words(data, ['A'], ['B'], focus_count=2, review_count=3, days=3, rng=random.Random(7))
-    all_words = []
     for p in plans:
-        all_words.extend(w.word for w in p.focus_words)
-        all_words.extend(w.word for w in p.review_words)
-    assert len(all_words) == len(set(all_words))  # 无重复
+        assert len(p.focus_words) == 2 and len(p.review_words) == 3
+        day_words = ([w.word for w in p.focus_words]
+                     + [w.word for w in p.review_words])
+        assert len(day_words) == len(set(day_words))  # 当天无重复
     assert len(plans) == 3
