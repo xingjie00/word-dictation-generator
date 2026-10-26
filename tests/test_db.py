@@ -35,10 +35,12 @@ def test_first_run_import(tmp_path):
     data = db.load_word_data(d)
     assert data['units'] == ['U1', 'U2']
     assert data['unit_words']['U1'] == [
-        {'word': 'a', 'translation': '甲'},
-        {'word': 'b', 'translation': '乙'},
+        {'id': 1, 'word': 'a', 'translation': '甲', 'dictation_count': 0},
+        {'id': 2, 'word': 'b', 'translation': '乙', 'dictation_count': 0},
     ]
-    assert data['unit_words']['U2'] == [{'word': 'c', 'translation': '丙'}]
+    assert data['unit_words']['U2'] == [
+        {'id': 3, 'word': 'c', 'translation': '丙', 'dictation_count': 0}
+    ]
     assert 'word_list' not in data
 
 
@@ -72,7 +74,9 @@ def test_add_unit_appends_at_end(tmp_path):
     assert db.add_unit('U3', [('x', '叉')], db_path=d) is True
     data = db.load_word_data(d)
     assert data['units'] == ['U1', 'U2', 'U3']
-    assert data['unit_words']['U3'] == [{'word': 'x', 'translation': '叉'}]
+    assert data['unit_words']['U3'] == [
+        {'id': 4, 'word': 'x', 'translation': '叉', 'dictation_count': 0}
+    ]
 
 
 def test_add_unit_duplicate_name_returns_false(tmp_path):
@@ -150,7 +154,9 @@ def test_query_helpers(tmp_path):
     assert db.unit_exists('U1', db_path=d) is True
     assert db.unit_exists('UX', db_path=d) is False
     assert db.get_unit_names(db_path=d) == ['U1', 'U2']
-    assert db.get_unit_words('U2', db_path=d) == [{'word': 'c', 'translation': '丙'}]
+    assert db.get_unit_words('U2', db_path=d) == [
+        {'id': 3, 'word': 'c', 'translation': '丙', 'dictation_count': 0}
+    ]
     assert db.get_unit_words('UX', db_path=d) == []
 
 

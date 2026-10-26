@@ -5,7 +5,9 @@
 1. 按随机权重把名额分到各选中单元——权重为以单元词量为参数的
    Dirichlet 随机数（期望比例≈词量比例，带随机波动），名额不少于
    单元数的场景下每单元保底 1 个，且不超过其可用词量；
-2. 在各单元内随机选词。
+2. 在各单元内按权重随机选词——权重 1/(dictation_count+1)，历史被
+   听写次数越少越容易入选，长期抽查更均匀；全部为 0 时等价于
+   修改前的均匀随机。
 
 去重策略：重点与复习各自仅保证当天内部不重复（按英文单词字符串），
 两部分之间互不比较——共享词可以同一天既作重点又作复习；
@@ -21,6 +23,8 @@ class WordEntry:
     word: str
     translation: str
     unit: str
+    id: Optional[int] = None       # 词库行 id（生成后写回抽查次数用；手工数据可无）
+    dictation_count: int = 0       # 历史被听写次数（选词权重用）
 
 
 @dataclass
@@ -44,7 +48,10 @@ def _build_unit_pools(data: dict, units: List[str]) -> Dict[str, List[WordEntry]
     pools: Dict[str, List[WordEntry]] = {}
     for unit in units:
         entries = [
-            WordEntry(word=w['word'], translation=w['translation'], unit=unit)
+            WordEntry(
+                word=w['word'], translation=w['translation'], unit=unit,
+                id=w.get('id'), dictation_count=w.get('dictation_count', 0),
+            )
             for w in data.get('unit_words', {}).get(unit, [])
         ]
         if entries:
@@ -116,12 +123,30 @@ def _allocate_quotas(avail_counts: Dict[str, int], count: int,
     return quotas
 
 
+def _weighted_sample(entries: List[WordEntry], weights: List[float], k: int,
+                     rng: random.Random) -> List[WordEntry]:
+    """按权重不放回抽取 k 个词：random.choices 逐个抽取，抽中即出池。
+
+    choices 本身是有放回抽样；单元内当天不允许重复，故逐个抽取并把
+    已抽中的词连同其权重移出池子。
+    """
+    pool = list(entries)
+    pool_weights = list(weights)
+    picked: List[WordEntry] = []
+    while len(picked) < k and pool:
+        i = rng.choices(range(len(pool)), weights=pool_weights, k=1)[0]
+        picked.append(pool.pop(i))
+        pool_weights.pop(i)
+    return picked
+
+
 def _pick_by_unit(unit_pools: Dict[str, List[WordEntry]], count: int,
                   day_used: Set[str], rng: random.Random) -> List[WordEntry]:
-    """单日抽取 count 个单词（两阶段：随机权重分配名额 + 单元内随机选词）。
+    """单日抽取 count 个单词（两阶段：随机权重分配名额 + 单元内加权选词）。
 
-    day_used 为该部分（重点或复习）当天已用单词集合，保证当天内部
-    不重复；跨天、跨部分（重点 vs 复习）无任何约束。
+    单元内权重 1/(dictation_count+1)：次数越少越容易入选；全 0 时退化为
+    均匀随机。day_used 为该部分（重点或复习）当天已用单词集合，保证当天
+    内部不重复；跨天、跨部分（重点 vs 复习）无任何约束。
     """
     if count <= 0:
         return []
@@ -137,13 +162,14 @@ def _pick_by_unit(unit_pools: Dict[str, List[WordEntry]], count: int,
         quotas = _allocate_quotas(
             {u: len(ws) for u, ws in avail_lists.items()}, count, rng
         )
-        # 阶段二：单元内随机选词（后续单元排除当天已被前面单元选走的词）
+        # 阶段二：单元内按次数加权选词（后续单元排除当天已被前面单元选走的词）
         for unit, quota in quotas.items():
             if quota <= 0:
                 continue
             avail = [w for w in avail_lists[unit] if w.word not in day_used]
             take = min(quota, len(avail))
-            for entry in rng.sample(avail, take):
+            weights = [1.0 / (w.dictation_count + 1) for w in avail]
+            for entry in _weighted_sample(avail, weights, take, rng):
                 day_used.add(entry.word)
                 picked.append(entry)
 
@@ -180,7 +206,8 @@ def select_words(
     """选择单词：每天独立抽取，重点与复习各自独立去重。
 
     每天的名额先按随机权重分配到各单元（保底 1 个/单元 + 其余按
-    词量加权的 Dirichlet 随机权重），再在单元内随机选词。重点与
+    词量加权的 Dirichlet 随机权重），再在单元内按 1/(dictation_count+1)
+    加权随机选词（次数越少越容易入选，全 0 时为均匀随机）。重点与
     复习各自仅保证当天内部不重复，两部分之间互不比较（共享词可以
     同一天既作重点又作复习）；跨天允许重复（复习的间隔重复语义）。
 

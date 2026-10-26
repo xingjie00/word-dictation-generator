@@ -15,6 +15,7 @@ from src.data_loader import get_data_file_path, get_resource_folder
 DB_FILENAME = 'words.db'
 
 # 两表设计：ORDER BY u.id, w.id 保持 JSON 追加语义（向早期单元加词不会打乱单元顺序）
+# dictation_count 为抽查次数（被选入听写文档的累计次数），旧库经 _migrate 幂等补列
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS units (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS words (
     unit_id INTEGER NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     word TEXT NOT NULL,
     translation TEXT NOT NULL,
+    dictation_count INTEGER NOT NULL DEFAULT 0,
     UNIQUE(unit_id, word)
 );
 """
@@ -79,11 +81,21 @@ def _seed(conn: sqlite3.Connection, word_list: list) -> None:
             )
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """幂等迁移：旧库 words 表补 dictation_count 列（已有数据保持默认 0）。"""
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(words)")]
+    if 'dictation_count' not in cols:
+        conn.execute(
+            "ALTER TABLE words ADD COLUMN dictation_count INTEGER NOT NULL DEFAULT 0"
+        )
+
+
 def _init_once(db_path: str, seed_json: Optional[str]) -> None:
-    """单次初始化尝试：建表 + 探针 + 视需要播种。sqlite 异常向上传播。"""
+    """单次初始化尝试：建表 + 迁移 + 探针 + 视需要播种。sqlite 异常向上传播。"""
     conn = _connect(db_path)
     try:
         conn.executescript(_SCHEMA)
+        _migrate(conn)  # 旧库补列（幂等），在种子导入之前执行
         # 探针必须是真实查询：connect 不验证文件，损坏在首条语句才暴露
         count = conn.execute("SELECT COUNT(*) FROM units").fetchone()[0]
         if count == 0:
@@ -135,7 +147,8 @@ def load_word_data(db_path: Optional[str] = None) -> Dict:
     """从数据库加载全部词库。
 
     Returns:
-        {'units': [单元名...], 'unit_words': {单元名: [{'word','translation'}...]}}
+        {'units': [单元名...],
+         'unit_words': {单元名: [{'id','word','translation','dictation_count'}...]}}
         与 word_selector 的数据契约一致（无 word_list 键）。
     """
     path = _resolve(db_path)
@@ -143,7 +156,7 @@ def load_word_data(db_path: Optional[str] = None) -> Dict:
     conn = _connect(path)
     try:
         rows = conn.execute(
-            "SELECT u.name, w.word, w.translation "
+            "SELECT u.name, w.id, w.word, w.translation, w.dictation_count "
             "FROM units u LEFT JOIN words w ON w.unit_id = u.id "
             "ORDER BY u.id, w.id"
         ).fetchall()
@@ -151,13 +164,16 @@ def load_word_data(db_path: Optional[str] = None) -> Dict:
         conn.close()
 
     units: List[str] = []
-    unit_words: Dict[str, List[Dict[str, str]]] = {}
-    for name, word, translation in rows:
+    unit_words: Dict[str, List[Dict]] = {}
+    for name, wid, word, translation, count in rows:
         if name not in unit_words:
             unit_words[name] = []
             units.append(name)
         if word is not None:  # LEFT JOIN：空单元保护
-            unit_words[name].append({'word': word, 'translation': translation})
+            unit_words[name].append({
+                'id': wid, 'word': word, 'translation': translation,
+                'dictation_count': count,
+            })
     return {'units': units, 'unit_words': unit_words}
 
 
@@ -185,21 +201,22 @@ def unit_exists(name: str, db_path: Optional[str] = None) -> bool:
     return row is not None
 
 
-def get_unit_words(unit_name: str, db_path: Optional[str] = None) -> List[Dict[str, str]]:
-    """指定单元的单词列表（按 id 顺序）。"""
+def get_unit_words(unit_name: str, db_path: Optional[str] = None) -> List[Dict]:
+    """指定单元的单词列表（按 id 顺序，含 id 与抽查次数）。"""
     path = _resolve(db_path)
     init_db(path)
     conn = _connect(path)
     try:
         rows = conn.execute(
-            "SELECT w.word, w.translation FROM words w "
+            "SELECT w.id, w.word, w.translation, w.dictation_count FROM words w "
             "JOIN units u ON w.unit_id = u.id "
             "WHERE u.name = ? ORDER BY w.id",
             (unit_name,)
         ).fetchall()
     finally:
         conn.close()
-    return [{'word': w, 'translation': t} for w, t in rows]
+    return [{'id': i, 'word': w, 'translation': t, 'dictation_count': c}
+            for i, w, t, c in rows]
 
 
 def add_unit(name: str, words: List[Tuple[str, str]], db_path: Optional[str] = None) -> bool:
@@ -262,6 +279,33 @@ def add_words(unit_name: str, words: List[Tuple[str, str]], db_path: Optional[st
         )
         conn.commit()
         return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def increment_dictation_counts(word_ids: List[int],
+                               db_path: Optional[str] = None) -> None:
+    """批量累加单词抽查次数（单事务，任一失败整体回滚）。
+
+    Args:
+        word_ids: 单词 id 列表；同一 id 出现多次则累加多次
+            （同一文档中被抽中多天、或同一天既作重点又作复习）。
+        db_path: 数据库路径；None 用默认。
+    """
+    if not word_ids:
+        return
+    path = _resolve(db_path)
+    init_db(path)
+    conn = _connect(path)
+    try:
+        conn.executemany(
+            "UPDATE words SET dictation_count = dictation_count + 1 WHERE id = ?",
+            [(i,) for i in word_ids]
+        )
+        conn.commit()
     except Exception:
         conn.rollback()
         raise

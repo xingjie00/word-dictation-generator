@@ -1,7 +1,7 @@
 # src/gui/tabs/settings.py
 from typing import Optional
 
-from PyQt5.QtWidgets import (QFormLayout, QGroupBox, QLabel, QLineEdit,
+from PyQt6.QtWidgets import (QFormLayout, QGroupBox, QLabel, QLineEdit,
                              QSpinBox, QVBoxLayout, QWidget)
 
 

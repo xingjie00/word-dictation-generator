@@ -9,8 +9,8 @@ import re
 import sqlite3
 from typing import Callable, List, Optional, Tuple
 
-from PyQt5.QtWidgets import (QButtonGroup, QComboBox, QFileDialog, QFormLayout,
-                             QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QFileDialog, QFormLayout,
+                             QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                              QListWidget, QPlainTextEdit, QPushButton,
                              QRadioButton, QScrollArea, QVBoxLayout, QWidget)
 
@@ -67,7 +67,7 @@ class WordLibraryTab(QWidget):
         outer = QVBoxLayout(self)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.NoFrame)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         inner = QWidget()
         layout = QVBoxLayout(inner)
 

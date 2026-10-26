@@ -4,20 +4,45 @@ import sqlite3
 import tempfile
 import urllib.request
 import webbrowser
+from typing import List, Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
                              QMainWindow, QMessageBox, QPushButton, QProgressBar,
                              QTabWidget, QVBoxLayout, QWidget)
 
 import src.db as db
 from src.data_loader import load_config, save_config
-from src.word_selector import select_words, SelectionError
+from src.word_selector import select_words, SelectionError, DayPlan
 from src.html_generator import build_full_document
 from src.gui.tabs.unit_selection import UnitSelectionTab
 from src.gui.tabs.settings import SettingsTab
 from src.gui.tabs.word_library import WordLibraryTab
+
+
+def write_document_and_record(path: str, html: str, day_plans: List[DayPlan],
+                              db_path: Optional[str] = None) -> None:
+    """将 HTML 文档写盘；写盘成功后写回入选词的抽查次数。
+
+    写盘抛异常时不写回，保证计数与实际产出的文档一致。同一词在文档中
+    出现多次（跨天、或同一天既作重点又作复习）按出现次数累加。
+    预览（临时文件）不走此路径，不计数。
+
+    Args:
+        path: 目标文件路径。
+        html: 完整 HTML 文档字符串。
+        day_plans: select_words 返回的 DayPlan 列表。
+        db_path: 数据库路径；None 用默认（测试时可注入）。
+    """
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    word_ids = [
+        entry.id
+        for plan in day_plans
+        for entry in plan.focus_words + plan.review_words
+    ]
+    db.increment_dictation_counts(word_ids, db_path=db_path)
 
 
 class WordDictationGUI(QMainWindow):
@@ -56,8 +81,8 @@ class WordDictationGUI(QMainWindow):
 
         # 标题
         title = QLabel("单词听写生成器 v3.0")
-        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Microsoft YaHei", 16, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         # 标签页
@@ -199,8 +224,8 @@ class WordDictationGUI(QMainWindow):
                 )
 
                 if path:
-                    with open(path, 'w', encoding='utf-8') as f:
-                        f.write(html)
+                    # 写盘成功后写回入选词的抽查次数（失败/取消不计数）
+                    write_document_and_record(path, html, day_plans)
 
                     self.progress.setValue(0)
                     self.statusBar().showMessage(f"HTML文档已保存: {os.path.basename(path)}")

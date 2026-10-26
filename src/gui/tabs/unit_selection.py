@@ -1,7 +1,7 @@
 # src/gui/tabs/unit_selection.py
 from typing import List, Optional
 
-from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QGroupBox, QHBoxLayout,
+from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QGroupBox, QHBoxLayout,
                              QListWidget, QPushButton, QVBoxLayout, QWidget)
 
 
@@ -31,7 +31,7 @@ class UnitSelectionTab(QWidget):
         review_layout = QVBoxLayout(review_group)
 
         self.review_list = QListWidget()
-        self.review_list.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.review_list.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         for unit in self.units:
             self.review_list.addItem(unit)
         review_layout.addWidget(self.review_list)
