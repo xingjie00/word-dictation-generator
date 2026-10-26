@@ -18,11 +18,11 @@ class UnitSelectionTab:
         tk.Label(focus_frame, text="选择一个重点单元:").pack(anchor='w')
 
         self.focus_var = tk.StringVar()
-        focus_combobox = ttk.Combobox(focus_frame, textvariable=self.focus_var,
-                                      state="readonly")
-        focus_combobox['values'] = ["无"] + self.units
-        focus_combobox.current(0)  # 默认选择"无"
-        focus_combobox.pack(fill='x', pady=5)
+        self.focus_combobox = ttk.Combobox(focus_frame, textvariable=self.focus_var,
+                                           state="readonly")
+        self.focus_combobox['values'] = ["无"] + self.units
+        self.focus_combobox.current(0)  # 默认选择"无"
+        self.focus_combobox.pack(fill='x', pady=5)
 
         # 复习单元选择
         review_frame = ttk.LabelFrame(self.frame, text="选择复习单元", padding=10)
@@ -63,3 +63,21 @@ class UnitSelectionTab:
     def clear_review_units(self):
         """清空复习单元选择"""
         self.review_listbox.selection_clear(0, tk.END)
+
+    def refresh_units(self, units):
+        """刷新单元列表（词库变更后调用）。
+
+        保留仍有效的当前重点选择；复习选择会被清空（可接受）。
+        """
+        self.units = units
+        # 重点单元 Combobox
+        current_focus = self.focus_var.get()
+        self.focus_combobox['values'] = ["无"] + self.units
+        if current_focus in self.units:
+            self.focus_var.set(current_focus)
+        else:
+            self.focus_combobox.current(0)  # 回到"无"
+        # 复习单元 Listbox
+        self.review_listbox.delete(0, tk.END)
+        for unit in self.units:
+            self.review_listbox.insert(tk.END, unit)

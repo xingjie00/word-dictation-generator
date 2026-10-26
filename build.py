@@ -26,10 +26,12 @@ def run_pyinstaller():
         f"--name=单词听写生成器",
         "--add-data=resources;resources",
         "--hidden-import=src.data_loader",
-        "--hidden-import=src.config_manager",
+        "--hidden-import=src.word_selector",
+        "--hidden-import=src.html_generator",
         "--hidden-import=src.gui.main_window",
         "--hidden-import=src.gui.tabs.unit_selection",
         "--hidden-import=src.gui.tabs.settings",
+        "--hidden-import=src.gui.tabs.word_library",
         "main.py"
     ]
 

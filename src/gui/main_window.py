@@ -2,19 +2,23 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
-import random
-import datetime
+import tempfile
+import urllib.request
+import webbrowser
 
 from src.data_loader import load_word_data, load_config, save_config
+from src.word_selector import select_words, SelectionError, DayPlan
+from src.html_generator import build_full_document
 from src.gui.tabs.unit_selection import UnitSelectionTab
 from src.gui.tabs.settings import SettingsTab
+from src.gui.tabs.word_library import WordLibraryTab
 
 
 class WordDictationGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("单词听写生成器 v2.0")
-        self.root.geometry("700x600")
+        self.root.geometry("700x650")
 
         # 窗口关闭时保存配置
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -30,6 +34,8 @@ class WordDictationGUI:
             messagebox.showerror("错误", f"加载单词数据失败: {e}")
             self.root.destroy()
             return
+
+        self._last_temp_html = None
 
         self.setup_ui()
 
@@ -47,18 +53,37 @@ class WordDictationGUI:
         # 初始化标签页
         self.unit_tab = UnitSelectionTab(self.notebook, self.units)
         self.settings_tab = SettingsTab(self.notebook, self.config)
+        self.library_tab = WordLibraryTab(
+            self.notebook, self.data,
+            on_data_changed=self.on_word_data_changed
+        )
 
         # 添加标签页
         self.notebook.add(self.unit_tab.frame, text="选择单元")
         self.notebook.add(self.settings_tab.frame, text="设置参数")
+        self.notebook.add(self.library_tab.frame, text="词库管理")
 
-        # 生成按钮
-        generate_btn = tk.Button(self.root, text="生成HTML听写文档",
+        # 按钮区域
+        btn_frame = tk.Frame(self.root)
+        btn_frame.pack(pady=10)
+
+        generate_btn = tk.Button(btn_frame, text="生成HTML听写文档",
                                  command=self.generate_document,
                                  bg="#4CAF50", fg="white",
                                  font=("Microsoft YaHei", 12, "bold"),
                                  padx=20, pady=10)
-        generate_btn.pack(pady=10)
+        generate_btn.pack(side=tk.LEFT, padx=10)
+
+        preview_btn = tk.Button(btn_frame, text="预览",
+                                command=self.preview_document,
+                                bg="#2196F3", fg="white",
+                                font=("Microsoft YaHei", 12, "bold"),
+                                padx=20, pady=10)
+        preview_btn.pack(side=tk.LEFT, padx=10)
+
+        # 进度条
+        self.progress = ttk.Progressbar(self.root, mode='determinate', maximum=100)
+        self.progress.pack(fill='x', padx=10, pady=2)
 
         # 状态栏
         self.status_var = tk.StringVar()
@@ -66,6 +91,11 @@ class WordDictationGUI:
         status_bar = tk.Label(self.root, textvariable=self.status_var,
                               bd=1, relief=tk.SUNKEN, anchor=tk.W)
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def on_word_data_changed(self):
+        """词库变更后的回调：刷新单元选择列表"""
+        self.units = self.data['units']
+        self.unit_tab.refresh_units(self.units)
 
     def save_current_config(self):
         """保存当前配置到文件"""
@@ -77,352 +107,84 @@ class WordDictationGUI:
         }
         save_config(config)
 
-    def on_closing(self):
-        """窗口关闭时保存配置"""
-        self.save_current_config()
-        self.root.destroy()
+    def _build_day_plans(self):
+        """构建每日单词计划（generate 与 preview 共用）。
 
-    def generate_html_table_content(self, day_num, focus_units, review_units, focus_count, review_count):
-        """生成一天的HTML表格内容"""
-        # 选择单词
-        focus_words = []
-        review_words = []
+        Returns:
+            (day_plans, focus_count, total_count, review_count, days, focus_units, review_units)
 
-        # 选择重点单词
-        if focus_units:
-            all_focus_words = []
-            for unit in focus_units:
-                words = self.data['unit_words'].get(unit, [])
-                for word in words:
-                    word_with_unit = word.copy()
-                    word_with_unit["unit"] = unit
-                    all_focus_words.append(word_with_unit)
-
-            if all_focus_words:
-                focus_count = min(focus_count, len(all_focus_words))
-                focus_words = random.sample(all_focus_words, focus_count)
-
-        # 选择复习单词
-        if review_units:
-            all_review_words = []
-            for unit in review_units:
-                words = self.data['unit_words'].get(unit, [])
-                for word in words:
-                    word_with_unit = word.copy()
-                    word_with_unit["unit"] = unit
-                    all_review_words.append(word_with_unit)
-
-            if all_review_words:
-                review_count = min(review_count, len(all_review_words))
-                review_words = random.sample(all_review_words, review_count)
-
-        # 生成表格HTML
-        table_html = f"""
-        <div class="page">
-            <div class="header">
-                <h1>英语单词听写练习 第{day_num}天</h1>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th width="10%">序号</th>
-                        <th width="25%">英文单词</th>
-                        <th width="25%">中文释义</th>
-                        <th width="10%">批改</th>
-                        <th width="20%">单元</th>
-                        <th width="10%">得分</th>
-                    </tr>
-                </thead>
-                <tbody>
+        Raises:
+            SelectionError: 参数无效或单词不足时抛出。
         """
-
-        # 添加重点单词
-        row_num = 1
-        if focus_words:
-            for i, item in enumerate(focus_words, 1):
-                table_html += f"""
-                    <tr class="focus-row">
-                        <td>{i}</td>
-                        <td class="word-cell">
-                   
-                        </td>
-                        <td>{item["translation"]}</td>
-                        <td class="correction-cell"></td>
-                        <td>{item["unit"]}</td>
-                        <td class="score-cell"></td>
-                    </tr>
-                """
-                row_num = i + 1
-
-        # 添加复习单词（如果有重点和复习单词，添加分隔标记）
-        if review_words:
-            if focus_words:
-                table_html += f"""
-                    <tr class="separator-row">
-                        <td colspan="6" class="section-title">复习单词</td>
-                    </tr>
-                """
-
-            for i, item in enumerate(review_words, row_num):
-                table_html += f"""
-                    <tr class="review-row">
-                        <td>{i}</td>
-                        <td class="word-cell">
-                        
-                        </td>
-                        <td>{item["translation"]}</td>
-                        <td class="correction-cell"></td>
-                        <td>{item["unit"]}</td>
-                        <td class="score-cell"></td>
-                    </tr>
-                """
-
-        total_words = len(focus_words) + len(review_words)
-
-        # 添加统计信息和签名行
-        table_html += f"""
-                    <tr class="stats-row">
-                        <td colspan="2" class="total-label">今日总计</td>
-                        <td colspan="2" class="total-value">{total_words}个单词</td>
-                        <td colspan="2" class="total-score">总分: ______</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="signature-section">
-                <div class="signature-left">
-                    <div>学生姓名: _______________</div>
-                    <div>家长/老师签字: _______________</div>
-                </div>
-                <div class="signature-right">
-                    <div>批改日期: _______________</div>
-                    <div>完成情况: □优秀 □良好 □一般 □需改进</div>
-                </div>
-            </div>
-        </div>
-        """
-
-        return table_html
-
-    def generate_document(self):
-        """生成HTML文档"""
-        # 验证并获取参数
+        # 先清理 spinbox 半输文本
         self.settings_tab.update_word_counts()
         self.settings_tab.update_days()
 
-        # 保存当前配置
-        self.save_current_config()
-
+        # 读取单元选择
         focus_unit = self.unit_tab.focus_var.get()
-        if focus_unit == "无":
-            focus_units = []
-        else:
-            focus_units = [focus_unit]
+        focus_units = [] if focus_unit == "无" else [focus_unit]
 
-        # 获取选择的复习单元
         review_indices = self.unit_tab.review_listbox.curselection()
         review_units = [self.unit_tab.review_listbox.get(i) for i in review_indices]
 
-        # 排除重点单元（如果选择了）
+        # 排除重点单元出现在复习列表中（保留原有行为，留在调用方保持 selector 纯净）
         if focus_units:
             review_units = [unit for unit in review_units if unit != focus_units[0]]
 
-        # 检查参数
-        if not review_units:
-            messagebox.showwarning("警告", "请至少选择一个复习单元！")
-            return
-
+        # 解析参数
         try:
             focus_count = int(self.settings_tab.focus_count_var.get())
             total_count = int(self.settings_tab.total_count_var.get())
             days = int(self.settings_tab.days_var.get())
         except ValueError:
-            messagebox.showerror("错误", "请输入有效的数字！")
-            return
+            raise SelectionError("请输入有效的数字！")
 
         if focus_count < 0 or focus_count > total_count:
-            messagebox.showerror("错误", f"重点单词数量必须在0-{total_count}之间！")
-            return
+            raise SelectionError(f"重点单词数量必须在 0-{total_count} 之间！")
 
         review_count = total_count - focus_count
 
-        # 检查单词数量是否足够
-        if focus_units:
-            total_focus_words = sum(len(self.data['unit_words'].get(unit, []))
-                                    for unit in focus_units)
-            if total_focus_words < focus_count:
-                messagebox.showwarning("警告",
-                                       f"重点单元只有{total_focus_words}个单词，少于设定的{focus_count}个！")
-                return
+        # 放宽单元必选：focus_count>0 时才要求重点单元，review_count>0 时才要求复习单元
+        if focus_count > 0 and not focus_units:
+            raise SelectionError("请选择一个重点单元（重点单词数 > 0）！")
+        if review_count > 0 and not review_units:
+            raise SelectionError("请至少选择一个复习单元（复习单词数 > 0）！")
 
-        total_review_words = sum(len(self.data['unit_words'].get(unit, []))
-                                 for unit in review_units)
-        if total_review_words < review_count:
-            messagebox.showwarning("警告",
-                                   f"复习单元总共只有{total_review_words}个单词，少于设定的{review_count}个！")
+        # 调用纯选择逻辑
+        day_plans = select_words(
+            self.data, focus_units, review_units,
+            focus_count, review_count, days
+        )
+
+        return day_plans, focus_count, total_count, review_count, days, focus_units, review_units
+
+    def _update_progress(self, cur, total):
+        """进度回调"""
+        self.progress['value'] = cur / total * 100
+        self.root.update_idletasks()
+
+    def generate_document(self):
+        """生成HTML文档"""
+        try:
+            day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
+                self._build_day_plans()
+        except SelectionError as e:
+            messagebox.showwarning("无法生成", str(e))
             return
+
+        # 保存当前配置
+        self.save_current_config()
 
         # 更新状态
         self.status_var.set("正在生成HTML文档...")
-        self.root.update()
+        self.progress['value'] = 0
+        self.root.update_idletasks()
 
         try:
-            # 生成完整的HTML文档
-            html_doc = f"""<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语单词听写练习 - {days}天</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        body {{
-            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.4;
-            color: #333;
-            background: #fff;
-        }}
-        @media print {{
-            .page {{
-                page-break-after: always;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-            }}
-            .page:last-child {{
-                page-break-after: auto;
-            }}
-        }}
-        .page {{
-            padding: 20mm;
-            min-height: 297mm; /* A4纸高度 */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }}
-        .header {{
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #0066cc;
-        }}
-        .header h1 {{
-            font-size: 24px;
-            font-weight: bold;
-            color: #0066cc;
-            margin: 0;
-        }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            table-layout: fixed;
-        }}
-        th, td {{
-            border: 1px solid #666;
-            padding: 8px 5px;
-            text-align: center;
-            vertical-align: middle;
-            word-wrap: break-word;
-        }}
-        th {{
-            background-color: #f0f8ff;
-            font-weight: bold;
-            font-size: 13px;
-        }}
-        .focus-row {{
-            background-color: #f9f9f9;
-        }}
-        .review-row {{
-            background-color: #fff;
-        }}
-        .separator-row {{
-            background-color: #e6f3ff;
-        }}
-        .section-title {{
-            font-weight: bold;
-            font-style: italic;
-            text-align: center;
-            font-size: 14px;
-            color: #0066cc;
-        }}
-        .word-cell {{
-            text-align: left;
-            padding-left: 10px;
-        }}
-        .underline-space {{
-            border-bottom: 1px solid #999;
-            min-height: 20px;
-            display: flex;
-            align-items: center;
-        }}
-        .correction-cell, .score-cell {{
-            background-color: #f5f5f5;
-        }}
-        .stats-row {{
-            background-color: #e8f4ff;
-            font-weight: bold;
-        }}
-        .total-label, .total-value, .total-score {{
-            text-align: center;
-            font-size: 13px;
-        }}
-        .signature-section {{
-            margin-top: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }}
-        .signature-left, .signature-right {{
-            flex: 1;
-        }}
-        .signature-right {{
-            text-align: right;
-        }}
-        .signature-section div {{
-            margin-bottom: 8px;
-            font-size: 13px;
-        }}
-        .no-print {{
-            display: none;
-        }}
-        @media screen {{
-            body {{
-                background-color: #f5f5f5;
-            }}
-            .page {{
-                background: white;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                margin: 20px auto;
-                max-width: 210mm;
-            }}
-        }}
-    </style>
-</head>
-<body>
-"""
-
-            # 生成每一天的听写页
-            for day in range(1, days + 1):
-                table_content = self.generate_html_table_content(day, focus_units, review_units,
-                                                                 focus_count, review_count)
-                html_doc += table_content
-
-                # 只在非最后一天添加分页符
-                if day < days:
-                    html_doc += '<div style="page-break-after: always;"></div>'
-
-            html_doc += """
-</body>
-</html>
-"""
+            html = build_full_document(
+                day_plans, total_count, focus_count, review_count,
+                on_progress=self._update_progress
+            )
 
             # 保存文档
             filename = f"{self.settings_tab.filename_var.get()}{days}天.html"
@@ -434,8 +196,9 @@ class WordDictationGUI:
 
             if filepath:
                 with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(html_doc)
+                    f.write(html)
 
+                self.progress['value'] = 0
                 self.status_var.set(f"HTML文档已保存: {os.path.basename(filepath)}")
 
                 # 显示成功消息
@@ -452,11 +215,62 @@ class WordDictationGUI:
                                     f"• 推荐使用Ctrl+P打印\n"
                                     f"• 打印设置选择A4纸张")
             else:
+                self.progress['value'] = 0
                 self.status_var.set("用户取消了保存")
 
         except Exception as e:
+            self.progress['value'] = 0
             self.status_var.set("生成失败")
             messagebox.showerror("错误", f"生成HTML文档时出错: {str(e)}")
+
+    def preview_document(self):
+        """预览HTML文档（生成到临时文件并用浏览器打开，不保存）"""
+        try:
+            day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
+                self._build_day_plans()
+        except SelectionError as e:
+            messagebox.showwarning("无法预览", str(e))
+            return
+
+        self.status_var.set("正在生成预览...")
+        self.root.update_idletasks()
+
+        try:
+            html = build_full_document(day_plans, total_count, focus_count, review_count)
+
+            # 写入临时文件
+            with tempfile.NamedTemporaryFile(
+                suffix='.html', delete=False, mode='w', encoding='utf-8'
+            ) as f:
+                f.write(html)
+                path = f.name
+
+            # 清理上一次的临时文件
+            if self._last_temp_html and os.path.exists(self._last_temp_html):
+                try:
+                    os.unlink(self._last_temp_html)
+                except OSError:
+                    pass
+            self._last_temp_html = path
+
+            # 用默认浏览器打开
+            webbrowser.open('file:' + urllib.request.pathname2url(path))
+            self.status_var.set("已打开预览")
+
+        except Exception as e:
+            self.status_var.set("预览失败")
+            messagebox.showerror("错误", f"预览HTML文档时出错: {str(e)}")
+
+    def on_closing(self):
+        """窗口关闭时保存配置并清理临时文件"""
+        self.save_current_config()
+        # 清理预览临时文件
+        if self._last_temp_html and os.path.exists(self._last_temp_html):
+            try:
+                os.unlink(self._last_temp_html)
+            except OSError:
+                pass
+        self.root.destroy()
 
     def run(self):
         """运行GUI"""

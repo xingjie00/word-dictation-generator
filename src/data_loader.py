@@ -76,7 +76,8 @@ def load_word_data(json_file=None):
 
         return {
             'units': units,
-            'unit_words': unit_words
+            'unit_words': unit_words,
+            'word_list': data.get("word_list", [])
         }
     except Exception as e:
         raise Exception(f"加载单词数据失败: {e}")
@@ -142,3 +143,29 @@ def get_resource_folder():
         # 开发环境
         project_root = find_project_root()
         return os.path.join(project_root, 'resources')
+
+
+def save_word_data(word_list, file=None):
+    """保存单词数据到 words.json。
+
+    复用 get_resource_folder() 定位保存目标，绝不用 get_data_file_path
+    （onefile 模式下后者可能返回只读的 sys._MEIPASS 临时目录）。
+
+    Args:
+        word_list: word_list 列表（与 load_word_data 返回的 word_list 相同结构）。
+        file: 显式指定保存路径；None 时使用默认资源路径。
+
+    Returns:
+        成功返回 True，失败返回 False。
+    """
+    if file is None:
+        file = os.path.join(get_resource_folder(), 'words.json')
+
+    try:
+        os.makedirs(os.path.dirname(file), exist_ok=True)
+        with open(file, 'w', encoding='utf-8') as f:
+            json.dump({"word_list": word_list}, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"保存单词数据失败: {e}")
+        return False
