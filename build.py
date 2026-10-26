@@ -40,7 +40,9 @@ def run_pyinstaller():
     if os.path.exists("resources/icon.ico"):
         cmd.insert(-1, "--icon=resources/icon.ico")
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    # pyinstaller 输出为 UTF-8（含中文 exe 名），默认按 GBK 解码会在读取线程崩溃
+    result = subprocess.run(cmd, capture_output=True, text=True,
+                            encoding='utf-8', errors='replace')
 
     if result.returncode != 0:
         print(f"❌ 打包失败:\n{result.stderr}")
