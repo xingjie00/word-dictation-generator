@@ -148,3 +148,11 @@ python build.py
 
 ## 🤝 参与贡献
 欢迎提交Issue和Pull Request来改进这个项目。
+
+## 📄 许可证
+
+本项目以 GPL-3.0 许可证发布，完整文本见 [LICENSE](LICENSE)。
+
+Copyright (C) 2026 xingjie
+
+本程序是自由软件，你可以依据自由软件基金会发布的 GNU 通用公共许可证（第 3 版）重新分发或修改它。注意：本项目 GUI 基于 PyQt5（GPL v3）构建，分发打包后的 exe 时需同样以 GPL v3 提供并向接收者附上源码与许可证副本。
