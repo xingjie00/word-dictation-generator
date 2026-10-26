@@ -6,4 +6,5 @@ dist/
 .idea/
 *.egg-info/
 *.spec
+!单词听写生成器.spec
 resources/words.db*

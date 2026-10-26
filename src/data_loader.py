@@ -1,4 +1,5 @@
 # src/data_loader.py
+"""路径工具与配置读写。单词数据已迁移至 src/db.py（SQLite）。"""
 import json
 import os
 import sys
@@ -55,32 +56,6 @@ def get_data_file_path(filename):
     project_root = find_project_root()
     dev_path = os.path.join(project_root, 'resources', filename)
     return dev_path
-
-
-def load_word_data(json_file=None):
-    """加载单词数据"""
-    if json_file is None:
-        json_file = get_data_file_path('words.json')
-
-    try:
-        with open(json_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        # 直接从 word_list 获取所有单元
-        units = [unit_info["unit"] for unit_info in data.get("word_list", [])]
-
-        # 创建单元到单词的映射
-        unit_words = {}
-        for unit_info in data.get("word_list", []):
-            unit_words[unit_info["unit"]] = unit_info["words"]
-
-        return {
-            'units': units,
-            'unit_words': unit_words,
-            'word_list': data.get("word_list", [])
-        }
-    except Exception as e:
-        raise Exception(f"加载单词数据失败: {e}")
 
 
 def load_config(config_file=None):
@@ -143,29 +118,3 @@ def get_resource_folder():
         # 开发环境
         project_root = find_project_root()
         return os.path.join(project_root, 'resources')
-
-
-def save_word_data(word_list, file=None):
-    """保存单词数据到 words.json。
-
-    复用 get_resource_folder() 定位保存目标，绝不用 get_data_file_path
-    （onefile 模式下后者可能返回只读的 sys._MEIPASS 临时目录）。
-
-    Args:
-        word_list: word_list 列表（与 load_word_data 返回的 word_list 相同结构）。
-        file: 显式指定保存路径；None 时使用默认资源路径。
-
-    Returns:
-        成功返回 True，失败返回 False。
-    """
-    if file is None:
-        file = os.path.join(get_resource_folder(), 'words.json')
-
-    try:
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump({"word_list": word_list}, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception as e:
-        print(f"保存单词数据失败: {e}")
-        return False

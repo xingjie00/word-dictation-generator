@@ -26,6 +26,7 @@ def run_pyinstaller():
         f"--name=单词听写生成器",
         "--add-data=resources;resources",
         "--hidden-import=src.data_loader",
+        "--hidden-import=src.db",
         "--hidden-import=src.word_selector",
         "--hidden-import=src.html_generator",
         "--hidden-import=src.gui.main_window",
@@ -70,7 +71,9 @@ def organize_distribution():
             shutil.rmtree(resources_target)
 
         print(f"  复制resources文件夹到dist目录...")
-        shutil.copytree(resources_source, resources_target)
+        # 排除开发期的 SQLite 词库：发布包只带种子，用户首次运行自动生成
+        shutil.copytree(resources_source, resources_target,
+                        ignore=shutil.ignore_patterns('words.db*'))
 
         # 检查关键文件
         required_files = ['config.json', 'words.json']
@@ -99,17 +102,18 @@ def create_readme():
 
 ## 使用方法
 1. 双击运行 `单词听写生成器.exe`
-2. 在界面中选择单元和设置参数
-3. 点击"生成HTML听写文档"按钮
+2. 首次启动会自动从 resources/words.json 导入词库，生成 resources/words.db
+3. 在界面中选择单元和设置参数，点击"生成HTML听写文档"或"预览"
 
-## 配置文件
-- `config.json`: 程序配置文件，可修改默认参数
-- `words.json`: 单词数据库，可添加/修改单词
+## 文件说明
+- `resources/config.json`: 程序配置（界面参数会自动保存）
+- `resources/words.json`: 初始词库种子（仅在 words.db 缺失时使用）
+- `resources/words.db`:   词库数据库（首次运行自动生成）
 
-## 注意事项
-- 直接修改 `resources/` 文件夹中的json文件即可更新配置和单词
-- 程序会优先使用 `resources/` 文件夹中的文件
-- 重新打包exe时，`resources/` 文件夹保持不变
+## 词库维护
+- 添加单词：用程序内"词库管理"标签页，保存后即时生效
+- 重置词库：删除 resources/words.db 后重启程序，将重新从 words.json 导入
+- 直接编辑 words.json 不会影响已生成的 words.db
 
 ## 技术支持
 如有问题，请联系开发者。
@@ -148,7 +152,7 @@ def main():
     print(f"├── 单词听写生成器.exe")
     print(f"├── resources/")
     print(f"│   ├── config.json")
-    print(f"│   └── words.json")
+    print(f"│   └── words.json  (words.db 由用户首次运行时自动生成)")
     print(f"└── README.txt")
     print("=" * 50)
 

@@ -1,1 +1,1 @@
-# 无运行时第三方依赖（仅标准库：tkinter/json/os/sys/random/datetime/webbrowser/tempfile）
+PyQt5~=5.15
