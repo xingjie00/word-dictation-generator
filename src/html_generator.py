@@ -95,25 +95,22 @@ _CSS = """\
             display: flex;
             align-items: center;
         }
-        .correction-cell, .score-cell {
+        .correction-cell {
             background-color: #f5f5f5;
         }
         .stats-row {
             background-color: #e8f4ff;
             font-weight: bold;
         }
-        .total-label, .total-value, .total-score {
+        .total-label, .total-value {
             text-align: center;
             font-size: 13px;
         }
         .signature-section {
             margin-top: 30px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: flex-end;
-        }
-        .signature-left, .signature-right {
-            flex: 1;
         }
         .signature-right {
             text-align: right;
@@ -161,7 +158,7 @@ _HTML_TAIL = """
 # ── 单页渲染 ────────────────────────────────────────────────────────────
 
 def generate_day_page(plan: DayPlan) -> str:
-    """渲染一天的听写页面（<div class="page"> 含表格 + 签名栏）。
+    """渲染一天的听写页面（<div class="page"> 含表格 + 日期栏）。
 
     Args:
         plan: 该天的 DayPlan（含 focus_words / review_words）。
@@ -181,11 +178,10 @@ def generate_day_page(plan: DayPlan) -> str:
                 <thead>
                     <tr>
                         <th width="10%">序号</th>
-                        <th width="25%">英文单词</th>
-                        <th width="25%">中文释义</th>
-                        <th width="10%">批改</th>
-                        <th width="20%">单元</th>
-                        <th width="10%">得分</th>
+                        <th width="30%">英文单词</th>
+                        <th width="30%">中文释义</th>
+                        <th width="15%">单元</th>
+                        <th width="15%">更正</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -201,9 +197,8 @@ def generate_day_page(plan: DayPlan) -> str:
 
                         </td>
                         <td>{item.translation}</td>
-                        <td class="correction-cell"></td>
                         <td>{item.unit}</td>
-                        <td class="score-cell"></td>
+                        <td class="correction-cell"></td>
                     </tr>
         """
         row_num = i + 1
@@ -213,7 +208,7 @@ def generate_day_page(plan: DayPlan) -> str:
         if plan.focus_words:
             html += """
                     <tr class="separator-row">
-                        <td colspan="6" class="section-title">复习单词</td>
+                        <td colspan="5" class="section-title">复习单词</td>
                     </tr>
             """
         for i, item in enumerate(plan.review_words, row_num):
@@ -224,9 +219,8 @@ def generate_day_page(plan: DayPlan) -> str:
 
                         </td>
                         <td>{item.translation}</td>
-                        <td class="correction-cell"></td>
                         <td>{item.unit}</td>
-                        <td class="score-cell"></td>
+                        <td class="correction-cell"></td>
                     </tr>
             """
 
@@ -234,20 +228,14 @@ def generate_day_page(plan: DayPlan) -> str:
     html += f"""
                     <tr class="stats-row">
                         <td colspan="2" class="total-label">今日总计</td>
-                        <td colspan="2" class="total-value">{total_words}个单词</td>
-                        <td colspan="2" class="total-score">总分: ______</td>
+                        <td colspan="3" class="total-value">{total_words}个单词</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="signature-section">
-                <div class="signature-left">
-                    <div>学生姓名: _______________</div>
-                    <div>家长/老师签字: _______________</div>
-                </div>
                 <div class="signature-right">
-                    <div>批改日期: _______________</div>
-                    <div>完成情况: □优秀 □良好 □一般 □需改进</div>
+                    <div>日期: _______________</div>
                 </div>
             </div>
         </div>

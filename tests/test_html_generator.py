@@ -63,12 +63,32 @@ def test_on_progress_invoked_per_day():
     assert calls == [(1, 3), (2, 3), (3, 3)]
 
 
-def test_signature_section_present():
-    """签名栏存在。"""
+def test_date_section_present():
+    """日期栏存在；学生姓名/签字/完成情况均已移除。"""
     plan = DayPlan(1, [WordEntry('a', '甲', 'U1')], [])
     page = generate_day_page(plan)
-    assert '学生姓名' in page
-    assert '家长/老师签字' in page
+    assert '日期' in page
+    assert '学生姓名' not in page
+    assert '签字' not in page
+    assert '完成情况' not in page
+
+
+def test_no_score_column():
+    """得分/总分已移除。"""
+    plan = DayPlan(1, [WordEntry('a', '甲', 'U1')], [])
+    page = generate_day_page(plan)
+    assert '得分' not in page
+    assert '总分' not in page
+    assert 'score-cell' not in page
+
+
+def test_correction_column_last():
+    """更正列存在且在最后（单元之后），批改列已改名。"""
+    plan = DayPlan(1, [WordEntry('a', '甲', 'U1')], [])
+    page = generate_day_page(plan)
+    assert '更正' in page
+    assert '批改' not in page
+    assert page.index('单元') < page.index('更正')  # 更正位于末列
 
 
 def test_stats_row_shows_total():
