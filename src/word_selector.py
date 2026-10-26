@@ -1,5 +1,5 @@
 # src/word_selector.py
-"""纯单词选择逻辑：每天独立抽取，仅要求当天不重复。
+"""纯单词选择逻辑：每天独立抽取，重点与复习各自独立去重。
 
 每天的名额分两阶段分配：
 1. 按随机权重把名额分到各选中单元——权重为以单元词量为参数的
@@ -7,8 +7,9 @@
    单元数的场景下每单元保底 1 个，且不超过其可用词量；
 2. 在各单元内随机选词。
 
-跨天允许重复（复习的间隔重复语义）；同一天内重点/复习/各单元之间
-按英文单词字符串去重，保证当天不重复。
+去重策略：重点与复习各自仅保证当天内部不重复（按英文单词字符串），
+两部分之间互不比较——共享词可以同一天既作重点又作复习；
+跨天允许重复（复习的间隔重复语义）。
 """
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
@@ -119,8 +120,8 @@ def _pick_by_unit(unit_pools: Dict[str, List[WordEntry]], count: int,
                   day_used: Set[str], rng: random.Random) -> List[WordEntry]:
     """单日抽取 count 个单词（两阶段：随机权重分配名额 + 单元内随机选词）。
 
-    day_used 为当天已用单词集合（重点/复习共享），保证当天不重复；
-    跨天无任何约束。
+    day_used 为该部分（重点或复习）当天已用单词集合，保证当天内部
+    不重复；跨天、跨部分（重点 vs 复习）无任何约束。
     """
     if count <= 0:
         return []
@@ -176,12 +177,12 @@ def select_words(
     days: int,
     rng: Optional[random.Random] = None,
 ) -> List[DayPlan]:
-    """选择单词：每天独立抽取，仅保证当天不重复。
+    """选择单词：每天独立抽取，重点与复习各自独立去重。
 
     每天的名额先按随机权重分配到各单元（保底 1 个/单元 + 其余按
-    词量加权的 Dirichlet 随机权重），再在单元内随机选词。跨天允许
-    重复（复习的间隔重复语义）；同一天内重点与复习共享 day_used，
-    一个词当天只会出现一次。
+    词量加权的 Dirichlet 随机权重），再在单元内随机选词。重点与
+    复习各自仅保证当天内部不重复，两部分之间互不比较（共享词可以
+    同一天既作重点又作复习）；跨天允许重复（复习的间隔重复语义）。
 
     Args:
         data: load_word_data() 返回的数据。
@@ -220,23 +221,11 @@ def select_words(
             f"请减少复习单词数，或选择更多复习单元。"
         )
 
-    # --- 逐天独立抽取 ---
+    # --- 逐天独立抽取（重点/复习各自独立去重，互不比较） ---
     plans: List[DayPlan] = []
     for day in range(1, days + 1):
-        day_used: Set[str] = set()  # 当天已用（重点/复习共享）
-
-        focus_picked = _pick_by_unit(focus_pools, focus_count, day_used, rng)
-
-        # 重点当天占用的共享词会压缩复习池，逐日复核
-        if review_count > 0:
-            avail_n = _unique_available(review_pools, day_used)
-            if avail_n < review_count:
-                raise SelectionError(
-                    f"第{day}天复习单词不足：还需 {review_count} 个，"
-                    f"去重后仅剩 {avail_n} 个可用（当天已被重点占用）。\n"
-                    f"请减少复习单词数，或选择更多复习单元。"
-                )
-        review_picked = _pick_by_unit(review_pools, review_count, day_used, rng)
+        focus_picked = _pick_by_unit(focus_pools, focus_count, set(), rng)
+        review_picked = _pick_by_unit(review_pools, review_count, set(), rng)
 
         plans.append(DayPlan(day_num=day, focus_words=focus_picked,
                              review_words=review_picked))
