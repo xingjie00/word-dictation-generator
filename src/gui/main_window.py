@@ -1,109 +1,118 @@
 # src/gui/main_window.py
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
 import os
+import sqlite3
 import tempfile
 import urllib.request
 import webbrowser
 
-from src.data_loader import load_word_data, load_config, save_config
-from src.word_selector import select_words, SelectionError, DayPlan
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel,
+                             QMainWindow, QMessageBox, QPushButton, QProgressBar,
+                             QTabWidget, QVBoxLayout, QWidget)
+
+import src.db as db
+from src.data_loader import load_config, save_config
+from src.word_selector import select_words, SelectionError
 from src.html_generator import build_full_document
 from src.gui.tabs.unit_selection import UnitSelectionTab
 from src.gui.tabs.settings import SettingsTab
 from src.gui.tabs.word_library import WordLibraryTab
 
 
-class WordDictationGUI:
+class WordDictationGUI(QMainWindow):
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("单词听写生成器 v2.0")
-        self.root.geometry("700x650")
-
-        # 窗口关闭时保存配置
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # 加载配置
+        super().__init__()
         self.config = load_config()
-
-        # 加载数据
-        try:
-            self.data = load_word_data()
-            self.units = self.data['units']
-        except Exception as e:
-            messagebox.showerror("错误", f"加载单词数据失败: {e}")
-            self.root.destroy()
-            return
-
         self._last_temp_html = None
 
-        self.setup_ui()
+        # 初始化词库数据库（首次运行从 words.json 种子导入）
+        try:
+            quarantine = db.init_db()
+        except (RuntimeError, sqlite3.Error) as e:
+            QMessageBox.critical(None, "词库初始化失败", str(e))
+            raise SystemExit(1)
+        if quarantine:
+            QMessageBox.warning(
+                None, "词库已重置",
+                f"检测到词库数据库损坏，原文件已备份为：\n{quarantine}\n\n"
+                f"词库已从 words.json 种子重新导入。"
+            )
 
-    def setup_ui(self):
+        self.data = db.load_word_data()
+        self.units = self.data['units']
+
+        self._build_ui()
+
+    def _build_ui(self):
         """设置用户界面"""
+        self.setWindowTitle("单词听写生成器 v3.0")
+        self.resize(700, 650)
+        self.setMinimumSize(640, 560)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+
         # 标题
-        title_label = tk.Label(self.root, text="单词听写生成器 v2.0",
-                               font=("Microsoft YaHei", 16, "bold"))
-        title_label.pack(pady=10)
+        title = QLabel("单词听写生成器 v3.0")
+        title.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
 
-        # 创建Notebook（标签页）
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill='both', expand=True, padx=10, pady=5)
-
-        # 初始化标签页
-        self.unit_tab = UnitSelectionTab(self.notebook, self.units)
-        self.settings_tab = SettingsTab(self.notebook, self.config)
-        self.library_tab = WordLibraryTab(
-            self.notebook, self.data,
-            on_data_changed=self.on_word_data_changed
-        )
-
-        # 添加标签页
-        self.notebook.add(self.unit_tab.frame, text="选择单元")
-        self.notebook.add(self.settings_tab.frame, text="设置参数")
-        self.notebook.add(self.library_tab.frame, text="词库管理")
+        # 标签页
+        self.tabs = QTabWidget()
+        self.unit_tab = UnitSelectionTab(self.tabs, self.units)
+        self.settings_tab = SettingsTab(self.tabs, self.config)
+        self.library_tab = WordLibraryTab(self.tabs, on_data_changed=self.on_word_data_changed)
+        self.tabs.addTab(self.unit_tab, "选择单元")
+        self.tabs.addTab(self.settings_tab, "设置参数")
+        self.tabs.addTab(self.library_tab, "词库管理")
+        layout.addWidget(self.tabs)
 
         # 按钮区域
-        btn_frame = tk.Frame(self.root)
-        btn_frame.pack(pady=10)
+        btn_row = QHBoxLayout()
+        btn_row.addStretch(1)
 
-        generate_btn = tk.Button(btn_frame, text="生成HTML听写文档",
-                                 command=self.generate_document,
-                                 bg="#4CAF50", fg="white",
-                                 font=("Microsoft YaHei", 12, "bold"),
-                                 padx=20, pady=10)
-        generate_btn.pack(side=tk.LEFT, padx=10)
+        self.generate_btn = QPushButton("生成HTML听写文档")
+        self.generate_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white;"
+            " font-weight: bold; padding: 8px 20px; }"
+        )
+        self.generate_btn.clicked.connect(self.generate_document)
+        btn_row.addWidget(self.generate_btn)
 
-        preview_btn = tk.Button(btn_frame, text="预览",
-                                command=self.preview_document,
-                                bg="#2196F3", fg="white",
-                                font=("Microsoft YaHei", 12, "bold"),
-                                padx=20, pady=10)
-        preview_btn.pack(side=tk.LEFT, padx=10)
+        self.preview_btn = QPushButton("预览")
+        self.preview_btn.setStyleSheet(
+            "QPushButton { background-color: #2196F3; color: white;"
+            " font-weight: bold; padding: 8px 20px; }"
+        )
+        self.preview_btn.clicked.connect(self.preview_document)
+        btn_row.addWidget(self.preview_btn)
+
+        btn_row.addStretch(1)
+        layout.addLayout(btn_row)
 
         # 进度条
-        self.progress = ttk.Progressbar(self.root, mode='determinate', maximum=100)
-        self.progress.pack(fill='x', padx=10, pady=2)
+        self.progress = QProgressBar()
+        layout.addWidget(self.progress)
 
-        # 状态栏
-        self.status_var = tk.StringVar()
-        self.status_var.set("就绪")
-        status_bar = tk.Label(self.root, textvariable=self.status_var,
-                              bd=1, relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        # 状态栏（QMainWindow 自带）
+        self.statusBar().showMessage("就绪")
 
     def on_word_data_changed(self):
-        """词库变更后的回调：刷新单元选择列表"""
+        """词库变更后的回调：从数据库重载并刷新单元选择列表"""
+        self.data = db.load_word_data()
         self.units = self.data['units']
         self.unit_tab.refresh_units(self.units)
 
     def save_current_config(self):
         """保存当前配置到文件"""
         config = {
-            'focus_count': int(self.settings_tab.focus_count_var.get()),
-            'total_count': int(self.settings_tab.total_count_var.get()),
-            'days': int(self.settings_tab.days_var.get()),
-            'filename': self.settings_tab.filename_var.get()
+            'focus_count': self.settings_tab.focus_count(),
+            'total_count': self.settings_tab.total_count(),
+            'days': self.settings_tab.days(),
+            'filename': self.settings_tab.filename()
         }
         save_config(config)
 
@@ -116,35 +125,28 @@ class WordDictationGUI:
         Raises:
             SelectionError: 参数无效或单词不足时抛出。
         """
-        # 先清理 spinbox 半输文本
-        self.settings_tab.update_word_counts()
-        self.settings_tab.update_days()
-
         # 读取单元选择
-        focus_unit = self.unit_tab.focus_var.get()
+        focus_unit = self.unit_tab.get_focus_unit()
         focus_units = [] if focus_unit == "无" else [focus_unit]
 
-        review_indices = self.unit_tab.review_listbox.curselection()
-        review_units = [self.unit_tab.review_listbox.get(i) for i in review_indices]
+        review_units = self.unit_tab.get_review_units()
 
         # 排除重点单元出现在复习列表中（保留原有行为，留在调用方保持 selector 纯净）
         if focus_units:
             review_units = [unit for unit in review_units if unit != focus_units[0]]
 
-        # 解析参数
-        try:
-            focus_count = int(self.settings_tab.focus_count_var.get())
-            total_count = int(self.settings_tab.total_count_var.get())
-            days = int(self.settings_tab.days_var.get())
-        except ValueError:
-            raise SelectionError("请输入有效的数字！")
+        # QSpinBox 恒返回合法范围内的 int，无需字符串解析与钳制
+        focus_count = self.settings_tab.focus_count()
+        total_count = self.settings_tab.total_count()
+        days = self.settings_tab.days()
 
+        # 兜底校验（正常情况下 spinbox 范围与动态上限已保证）
         if focus_count < 0 or focus_count > total_count:
             raise SelectionError(f"重点单词数量必须在 0-{total_count} 之间！")
 
         review_count = total_count - focus_count
 
-        # 放宽单元必选：focus_count>0 时才要求重点单元，review_count>0 时才要求复习单元
+        # 单元必选：focus_count>0 时才要求重点单元，review_count>0 时才要求复习单元
         if focus_count > 0 and not focus_units:
             raise SelectionError("请选择一个重点单元（重点单词数 > 0）！")
         if review_count > 0 and not review_units:
@@ -160,108 +162,120 @@ class WordDictationGUI:
 
     def _update_progress(self, cur, total):
         """进度回调"""
-        self.progress['value'] = cur / total * 100
-        self.root.update_idletasks()
+        self.progress.setValue(int(cur / total * 100))
+        QApplication.processEvents()
 
     def generate_document(self):
         """生成HTML文档"""
+        # processEvents 会派发输入事件（可重入），生成期间禁用按钮
+        self.generate_btn.setEnabled(False)
+        self.preview_btn.setEnabled(False)
         try:
-            day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
-                self._build_day_plans()
-        except SelectionError as e:
-            messagebox.showwarning("无法生成", str(e))
-            return
+            try:
+                day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
+                    self._build_day_plans()
+            except SelectionError as e:
+                QMessageBox.warning(self, "无法生成", str(e))
+                return
 
-        # 保存当前配置
-        self.save_current_config()
+            # 保存当前配置
+            self.save_current_config()
 
-        # 更新状态
-        self.status_var.set("正在生成HTML文档...")
-        self.progress['value'] = 0
-        self.root.update_idletasks()
+            self.statusBar().showMessage("正在生成HTML文档...")
+            self.progress.setValue(0)
+            QApplication.processEvents()
 
-        try:
-            html = build_full_document(
-                day_plans, total_count, focus_count, review_count,
-                on_progress=self._update_progress
-            )
+            try:
+                html = build_full_document(
+                    day_plans, total_count, focus_count, review_count,
+                    on_progress=self._update_progress
+                )
 
-            # 保存文档
-            filename = f"{self.settings_tab.filename_var.get()}{days}天.html"
-            filepath = filedialog.asksaveasfilename(
-                defaultextension=".html",
-                initialfile=filename,
-                filetypes=[("HTML文档", "*.html"), ("所有文件", "*.*")]
-            )
+                filename = f"{self.settings_tab.filename()}{days}天.html"
+                # 返回 (path, filter) 元组；取消时 path 为空串
+                path, _ = QFileDialog.getSaveFileName(
+                    self, "保存文档", filename,
+                    "HTML文档 (*.html);;所有文件 (*)"
+                )
 
-            if filepath:
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(html)
+                if path:
+                    with open(path, 'w', encoding='utf-8') as f:
+                        f.write(html)
 
-                self.progress['value'] = 0
-                self.status_var.set(f"HTML文档已保存: {os.path.basename(filepath)}")
+                    self.progress.setValue(0)
+                    self.statusBar().showMessage(f"HTML文档已保存: {os.path.basename(path)}")
 
-                # 显示成功消息
-                messagebox.showinfo("成功",
-                                    f"HTML听写文档生成成功！\n\n"
-                                    f"文件: {os.path.basename(filepath)}\n"
-                                    f"天数: {days}天\n"
-                                    f"总单词数: {total_count}个/天\n"
-                                    f"重点单元: {focus_units[0] if focus_units else '无'}\n"
-                                    f"复习单元: {len(review_units)}个\n"
-                                    f"每天: {focus_count}个重点单词 + {review_count}个复习单词\n\n"
-                                    f"提示：\n"
-                                    f"• 可以用浏览器打开查看\n"
-                                    f"• 推荐使用Ctrl+P打印\n"
-                                    f"• 打印设置选择A4纸张")
-            else:
-                self.progress['value'] = 0
-                self.status_var.set("用户取消了保存")
+                    QMessageBox.information(
+                        self, "成功",
+                        f"HTML听写文档生成成功！\n\n"
+                        f"文件: {os.path.basename(path)}\n"
+                        f"天数: {days}天\n"
+                        f"总单词数: {total_count}个/天\n"
+                        f"重点单元: {focus_units[0] if focus_units else '无'}\n"
+                        f"复习单元: {len(review_units)}个\n"
+                        f"每天: {focus_count}个重点单词 + {review_count}个复习单词\n\n"
+                        f"提示：\n"
+                        f"• 可以用浏览器打开查看\n"
+                        f"• 推荐使用Ctrl+P打印\n"
+                        f"• 打印设置选择A4纸张"
+                    )
+                else:
+                    self.progress.setValue(0)
+                    self.statusBar().showMessage("用户取消了保存")
 
-        except Exception as e:
-            self.progress['value'] = 0
-            self.status_var.set("生成失败")
-            messagebox.showerror("错误", f"生成HTML文档时出错: {str(e)}")
+            except Exception as e:
+                self.progress.setValue(0)
+                self.statusBar().showMessage("生成失败")
+                QMessageBox.critical(self, "错误", f"生成HTML文档时出错: {str(e)}")
+        finally:
+            self.generate_btn.setEnabled(True)
+            self.preview_btn.setEnabled(True)
 
     def preview_document(self):
         """预览HTML文档（生成到临时文件并用浏览器打开，不保存）"""
+        self.generate_btn.setEnabled(False)
+        self.preview_btn.setEnabled(False)
         try:
-            day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
-                self._build_day_plans()
-        except SelectionError as e:
-            messagebox.showwarning("无法预览", str(e))
-            return
+            try:
+                day_plans, focus_count, total_count, review_count, days, focus_units, review_units = \
+                    self._build_day_plans()
+            except SelectionError as e:
+                QMessageBox.warning(self, "无法预览", str(e))
+                return
 
-        self.status_var.set("正在生成预览...")
-        self.root.update_idletasks()
+            self.statusBar().showMessage("正在生成预览...")
+            QApplication.processEvents()
 
-        try:
-            html = build_full_document(day_plans, total_count, focus_count, review_count)
+            try:
+                html = build_full_document(day_plans, total_count, focus_count, review_count)
 
-            # 写入临时文件
-            with tempfile.NamedTemporaryFile(
-                suffix='.html', delete=False, mode='w', encoding='utf-8'
-            ) as f:
-                f.write(html)
-                path = f.name
+                # 写入临时文件
+                with tempfile.NamedTemporaryFile(
+                    suffix='.html', delete=False, mode='w', encoding='utf-8'
+                ) as f:
+                    f.write(html)
+                    path = f.name
 
-            # 清理上一次的临时文件
-            if self._last_temp_html and os.path.exists(self._last_temp_html):
-                try:
-                    os.unlink(self._last_temp_html)
-                except OSError:
-                    pass
-            self._last_temp_html = path
+                # 清理上一次的临时文件
+                if self._last_temp_html and os.path.exists(self._last_temp_html):
+                    try:
+                        os.unlink(self._last_temp_html)
+                    except OSError:
+                        pass
+                self._last_temp_html = path
 
-            # 用默认浏览器打开
-            webbrowser.open('file:' + urllib.request.pathname2url(path))
-            self.status_var.set("已打开预览")
+                # 用默认浏览器打开
+                webbrowser.open('file:' + urllib.request.pathname2url(path))
+                self.statusBar().showMessage("已打开预览")
 
-        except Exception as e:
-            self.status_var.set("预览失败")
-            messagebox.showerror("错误", f"预览HTML文档时出错: {str(e)}")
+            except Exception as e:
+                self.statusBar().showMessage("预览失败")
+                QMessageBox.critical(self, "错误", f"预览HTML文档时出错: {str(e)}")
+        finally:
+            self.generate_btn.setEnabled(True)
+            self.preview_btn.setEnabled(True)
 
-    def on_closing(self):
+    def closeEvent(self, event):
         """窗口关闭时保存配置并清理临时文件"""
         self.save_current_config()
         # 清理预览临时文件
@@ -270,8 +284,4 @@ class WordDictationGUI:
                 os.unlink(self._last_temp_html)
             except OSError:
                 pass
-        self.root.destroy()
-
-    def run(self):
-        """运行GUI"""
-        self.root.mainloop()
+        event.accept()

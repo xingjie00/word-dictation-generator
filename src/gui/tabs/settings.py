@@ -1,143 +1,80 @@
 # src/gui/tabs/settings.py
-import tkinter as tk
-from tkinter import ttk
+from typing import Optional
+
+from PyQt5.QtWidgets import (QFormLayout, QGroupBox, QLabel, QLineEdit,
+                             QSpinBox, QVBoxLayout, QWidget)
 
 
-class SettingsTab:
-    def __init__(self, parent, config):
-        self.frame = ttk.Frame(parent)
-        self.config = config
-        self.setup_ui()
+class SettingsTab(QWidget):
+    def __init__(self, parent: Optional[QWidget] = None, config: Optional[dict] = None):
+        super().__init__(parent)
+        self._config = config or {}
+        self._build_ui()
 
-    def setup_ui(self):
+    def _build_ui(self):
         """设置参数界面"""
+        layout = QVBoxLayout(self)
+
         # 单词数量设置
-        count_frame = ttk.LabelFrame(self.frame, text="单词数量设置", padding=10)
-        count_frame.pack(fill='x', padx=10, pady=5)
+        count_group = QGroupBox("单词数量设置")
+        count_form = QFormLayout(count_group)
 
-        tk.Label(count_frame, text="每天重点单词数量:").grid(row=0, column=0, sticky='w', pady=5)
-        self.focus_count_var = tk.StringVar(value=str(self.config.get('focus_count', 10)))
+        self.focus_spin = QSpinBox()
+        self.focus_spin.setRange(0, 50)
+        count_form.addRow("每天重点单词数量:", self.focus_spin)
 
-        # 创建可输入的 Spinbox
-        self.focus_count_spinbox = tk.Spinbox(
-            count_frame,
-            from_=0,
-            to=50,
-            textvariable=self.focus_count_var,
-            width=10,
-            command=self.update_word_counts  # 点击箭头时触发
-        )
-        self.focus_count_spinbox.grid(row=0, column=1, sticky='w', pady=5, padx=5)
+        self.total_spin = QSpinBox()
+        self.total_spin.setRange(1, 100)
+        count_form.addRow("每天总单词数:", self.total_spin)
 
-        # 绑定事件
-        self.focus_count_spinbox.bind('<Return>', lambda e: self.update_word_counts())
-        self.focus_count_spinbox.bind('<FocusOut>', lambda e: self.update_word_counts())
+        self.review_label = QLabel()
+        self.review_label.setStyleSheet("color: blue;")
+        count_form.addRow("每天复习单词数量:", self.review_label)
 
-        tk.Label(count_frame, text="每天总单词数:").grid(row=1, column=0, sticky='w', pady=5)
-        self.total_count_var = tk.StringVar(value=str(self.config.get('total_count', 18)))
+        layout.addWidget(count_group)
 
-        # 创建总单词数可输入的 Spinbox
-        self.total_count_spinbox = tk.Spinbox(
-            count_frame,
-            from_=1,
-            to=100,
-            textvariable=self.total_count_var,
-            width=10,
-            command=self.update_word_counts  # 点击箭头时触发
-        )
-        self.total_count_spinbox.grid(row=1, column=1, sticky='w', pady=5, padx=5)
+        # 生成设置
+        gen_group = QGroupBox("生成设置")
+        gen_form = QFormLayout(gen_group)
 
-        # 绑定事件
-        self.total_count_spinbox.bind('<Return>', lambda e: self.update_word_counts())
-        self.total_count_spinbox.bind('<FocusOut>', lambda e: self.update_word_counts())
+        self.days_spin = QSpinBox()
+        self.days_spin.setRange(1, 30)
+        gen_form.addRow("生成天数:", self.days_spin)
 
-        tk.Label(count_frame, text="每天复习单词数量:").grid(row=2, column=0, sticky='w', pady=5)
-        self.review_count_label = tk.Label(count_frame,
-                                           text=str(
-                                               self.config.get('total_count', 18) - self.config.get('focus_count', 10)),
-                                           fg="blue")
-        self.review_count_label.grid(row=2, column=1, sticky='w', pady=5, padx=5)
+        self.filename_edit = QLineEdit()
+        gen_form.addRow("输出文件名:", self.filename_edit)
 
-        # 绑定变量更新事件
-        self.focus_count_var.trace('w', lambda *args: self.update_word_counts())
-        self.total_count_var.trace('w', lambda *args: self.update_word_counts())
+        layout.addWidget(gen_group)
+        layout.addStretch(1)
 
-        # 生成天数设置
-        days_frame = ttk.LabelFrame(self.frame, text="生成设置", padding=10)
-        days_frame.pack(fill='x', padx=10, pady=5)
+        # 顺序关键：先从配置设值，再设动态上限，最后连接信号
+        # （先连信号再设值会触发多余的钳制/更新，且 config 中 focus>total 时表现不一致）
+        self.focus_spin.setValue(int(self._config.get('focus_count', 10)))
+        self.total_spin.setValue(int(self._config.get('total_count', 18)))
+        self.days_spin.setValue(int(self._config.get('days', 5)))
+        self.filename_edit.setText(self._config.get('filename', '单词听写'))
 
-        tk.Label(days_frame, text="生成天数:").grid(row=0, column=0, sticky='w', pady=5)
-        self.days_var = tk.StringVar(value=str(self.config.get('days', 5)))
+        # 交互式钳制：total 缩小时 focus 的上限随之缩小，QSpinBox 自动把 value 拉回范围内
+        self.focus_spin.setMaximum(self.total_spin.value())
+        self.total_spin.valueChanged.connect(self.focus_spin.setMaximum)
+        self.total_spin.valueChanged.connect(self._update_review_label)
+        self.focus_spin.valueChanged.connect(self._update_review_label)
+        self._update_review_label()
 
-        # 创建可输入的 Spinbox
-        self.days_spinbox = tk.Spinbox(
-            days_frame,
-            from_=1,
-            to=30,
-            textvariable=self.days_var,
-            width=10,
-            command=self.update_days  # 点击箭头时触发
-        )
-        self.days_spinbox.grid(row=0, column=1, sticky='w', pady=5, padx=5)
+    def _update_review_label(self, *_args):
+        """更新复习单词数显示（= 总数 - 重点数）"""
+        self.review_label.setText(str(self.total_spin.value() - self.focus_spin.value()))
 
-        # 绑定事件
-        self.days_spinbox.bind('<Return>', lambda e: self.update_days())
-        self.days_spinbox.bind('<FocusOut>', lambda e: self.update_days())
+    # ── 对外接口 ─────────────────────────────────────────────────────
 
-        # 文件名设置
-        tk.Label(days_frame, text="输出文件名:").grid(row=1, column=0, sticky='w', pady=5)
-        self.filename_var = tk.StringVar(value=self.config.get('filename', '单词听写'))
-        filename_entry = tk.Entry(days_frame, textvariable=self.filename_var, width=30)
-        filename_entry.grid(row=1, column=1, sticky='w', pady=5, padx=5)
+    def focus_count(self) -> int:
+        return self.focus_spin.value()
 
-    def update_word_counts(self, *args):
-        """更新单词数量显示"""
-        try:
-            # 获取总单词数
-            total_count = int(self.total_count_var.get())
-            if total_count < 1 or total_count > 100:
-                total_count = 18
-                self.total_count_var.set("18")
+    def total_count(self) -> int:
+        return self.total_spin.value()
 
-            # 获取重点单词数
-            focus_count = int(self.focus_count_var.get())
-            if focus_count < 0:
-                focus_count = 0
-                self.focus_count_var.set("0")
-            elif focus_count > total_count:
-                focus_count = total_count
-                self.focus_count_var.set(str(total_count))
+    def days(self) -> int:
+        return self.days_spin.value()
 
-            # 计算复习单词数
-            review_count = total_count - focus_count
-
-            # 更新显示
-            self.review_count_label.config(text=str(review_count))
-
-        except ValueError:
-            # 如果输入无效，恢复为默认值
-            self.focus_count_var.set("10")
-            self.total_count_var.set("18")
-            self.review_count_label.config(text="8")
-
-    def update_days(self, event=None):
-        """更新天数（整合了验证）"""
-        try:
-            value = self.days_var.get()
-            if value == "":
-                self.days_var.set("5")
-                return
-
-            value_int = int(value)
-
-            # 验证范围
-            if value_int < 1:
-                self.days_var.set("1")
-            elif value_int > 30:
-                self.days_var.set("30")
-            else:
-                self.days_var.set(str(value_int))
-
-        except ValueError:
-            # 如果输入无效，恢复为默认值
-            self.days_var.set("5")
+    def filename(self) -> str:
+        return self.filename_edit.text().strip()
