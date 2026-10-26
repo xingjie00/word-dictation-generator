@@ -1,17 +1,54 @@
 # src/gui/tabs/word_library.py
-"""仅新增式词库管理标签页：追加新单元、向已有单元追加新单词。
+"""仅新增式词库管理标签页：追加新单元、向已有单元追加新单词、批量导入。
 
 数据直接读写 SQLite（src/db.py），无内存别名机制；保存后经 on_data_changed
 通知主窗口重载词库并刷新单元选择。
 """
+import os
+import re
 import sqlite3
 from typing import Callable, List, Optional, Tuple
 
-from PyQt5.QtWidgets import (QButtonGroup, QComboBox, QFormLayout, QGroupBox,
-                             QHBoxLayout, QLabel, QLineEdit, QListWidget,
-                             QPushButton, QRadioButton, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QButtonGroup, QComboBox, QFileDialog, QFormLayout,
+                             QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                             QListWidget, QPlainTextEdit, QPushButton,
+                             QRadioButton, QScrollArea, QVBoxLayout, QWidget)
 
 import src.db as db
+
+# 批量导入的行分隔符：空格 / Tab / 中英文逗号 / 中英文分号
+_BATCH_SEP_RE = re.compile(r'[\s,，;；]+')
+
+
+def parse_batch_text(text: str) -> Tuple[List[Tuple[str, str]], List[Tuple[int, str]]]:
+    """解析批量导入文本：每行一个单词，格式「英文 释义」（分隔符见 _BATCH_SEP_RE）。
+
+    释义中允许继续含空格/标点（如 "apple n. 苹果" → 释义为 "n. 苹果"）。
+    批内英文单词重复时保留首个，后续行计入错误。
+
+    Returns:
+        (entries, errors)：entries 为 [(word, translation), ...]；
+        errors 为 [(行号, 原因), ...]（行号从 1 计）。
+    """
+    entries: List[Tuple[str, str]] = []
+    errors: List[Tuple[int, str]] = []
+    seen = set()
+    for line_no, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        if not line:
+            continue
+        parts = _BATCH_SEP_RE.split(line, maxsplit=1)
+        if len(parts) < 2 or not parts[1].strip():
+            errors.append((line_no, '缺少释义'))
+            continue
+        word = parts[0].strip()
+        translation = ' '.join(parts[1].split())  # 规整释义内空白
+        if word in seen:
+            errors.append((line_no, f'批内重复: {word}'))
+            continue
+        seen.add(word)
+        entries.append((word, translation))
+    return entries, errors
 
 
 class WordLibraryTab(QWidget):
@@ -26,7 +63,13 @@ class WordLibraryTab(QWidget):
 
     def _build_ui(self):
         """设置词库管理界面"""
-        layout = QVBoxLayout(self)
+        # 内容较多（单个添加 + 批量导入 + 暂存列表），用滚动区承载防止溢出
+        outer = QVBoxLayout(self)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.NoFrame)
+        inner = QWidget()
+        layout = QVBoxLayout(inner)
 
         # ── 添加目标 ──
         target_group = QGroupBox("添加目标")
@@ -75,6 +118,33 @@ class WordLibraryTab(QWidget):
 
         layout.addWidget(input_group)
 
+        # ── 批量导入 ──
+        batch_group = QGroupBox("批量导入")
+        batch_layout = QVBoxLayout(batch_group)
+
+        batch_hint = QLabel("每行一个单词，格式「英文 释义」（空格 / Tab / 逗号分隔），"
+                            "解析后进入下方暂存列表，保存时统一校验")
+        batch_hint.setWordWrap(True)
+        batch_layout.addWidget(batch_hint)
+
+        self.batch_edit = QPlainTextEdit()
+        self.batch_edit.setPlaceholderText("apple 苹果\nbook\t书\ncat,猫")
+        self.batch_edit.setMaximumHeight(110)
+        batch_layout.addWidget(self.batch_edit)
+
+        batch_btn_row = QHBoxLayout()
+        from_file_btn = QPushButton("从文件导入…")
+        from_file_btn.clicked.connect(self._import_from_file)
+        batch_btn_row.addWidget(from_file_btn)
+
+        parse_btn = QPushButton("解析加入暂存")
+        parse_btn.clicked.connect(self._parse_batch)
+        batch_btn_row.addWidget(parse_btn)
+        batch_btn_row.addStretch(1)
+        batch_layout.addLayout(batch_btn_row)
+
+        layout.addWidget(batch_group)
+
         # ── 暂存列表 ──
         staging_group = QGroupBox("暂存单词")
         staging_layout = QVBoxLayout(staging_group)
@@ -103,6 +173,10 @@ class WordLibraryTab(QWidget):
         self.status_label = QLabel("")
         self.status_label.setStyleSheet("color: gray;")
         layout.addWidget(self.status_label)
+
+        layout.addStretch(1)
+        scroll.setWidget(inner)
+        outer.addWidget(scroll)
 
     # ── 内部方法 ─────────────────────────────────────────────────────
 
@@ -146,6 +220,66 @@ class WordLibraryTab(QWidget):
         self.staging.pop(row)
         self.staging_list.takeItem(row)
         self._set_status(f"已移除（剩余 {len(self.staging)} 项）", "gray")
+
+    def _import_from_file(self):
+        """从 .txt 文件载入词表文本到批量导入输入框"""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "选择词表文件", "", "文本文件 (*.txt);;所有文件 (*)")
+        if not path:
+            return
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except UnicodeDecodeError:
+            # 常见：Windows 记事本保存的 GBK 词表
+            try:
+                with open(path, 'r', encoding='gbk', errors='replace') as f:
+                    text = f.read()
+            except OSError as e:
+                self._set_status(f"❌ 读取文件失败: {e}", "red")
+                return
+        except OSError as e:
+            self._set_status(f"❌ 读取文件失败: {e}", "red")
+            return
+        self.batch_edit.setPlainText(text)
+        self._set_status(f"已载入 {os.path.basename(path)}，点击「解析加入暂存」", "gray")
+
+    def _parse_batch(self):
+        """解析批量导入文本，把结果加入暂存列表"""
+        text = self.batch_edit.toPlainText()
+        if not text.strip():
+            self._set_status("⚠️ 请先粘贴或从文件导入词表文本", "red")
+            return
+
+        entries, errors = parse_batch_text(text)
+
+        # 跳过暂存中已有的单词
+        existing = {w for w, _ in self.staging}
+        added, dup_in_staging = 0, 0
+        for word, translation in entries:
+            if word in existing:
+                dup_in_staging += 1
+                continue
+            existing.add(word)
+            self.staging.append((word, translation))
+            self.staging_list.addItem(f"{word} — {translation}")
+            added += 1
+
+        # 组装结果提示
+        parts = [f"✅ 解析加入暂存 {added} 条"]
+        skipped = []
+        if errors:
+            nos = "、".join(str(n) for n, _ in errors[:10])
+            if len(errors) > 10:
+                nos += "…"
+            reasons = "、".join(sorted({r for _, r in errors}))
+            skipped.append(f"格式问题 {len(errors)} 行（第 {nos} 行：{reasons}）")
+        if dup_in_staging:
+            skipped.append(f"暂存已有 {dup_in_staging} 条被跳过")
+        if skipped:
+            self._set_status("；".join(parts + skipped), "gray")
+        else:
+            self._set_status("；".join(parts), "green")
 
     def _save_to_library(self):
         """将暂存单词保存到词库（写 SQLite）"""
