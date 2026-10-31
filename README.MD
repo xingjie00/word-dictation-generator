@@ -1,6 +1,6 @@
 # 单词听写生成器 (Word Dictation Generator)
 
-一个基于 Python 和 PyQt5 的图形化工具，用于生成可定制的英语单词听写练习文档。教师或家长可以轻松创建包含重点复习和随机抽查的每日听写练习。
+一个基于 Python 和 PyQt6 的图形化工具，用于生成可定制的英语单词听写练习文档。教师或家长可以轻松创建包含重点复习和随机抽查的每日听写练习。
 
 ## ✨ 功能特性
 
@@ -34,7 +34,7 @@ word-dictation-generator/
 │   ├── db.py               # SQLite 词库层（建库/种子导入/查询/追加）
 │   ├── word_selector.py    # 单词选择逻辑（严格跨天去重）
 │   ├── html_generator.py   # HTML文档模板与生成
-│   └── gui/                # 图形界面模块（PyQt5）
+│   └── gui/                # 图形界面模块（PyQt6）
 │       ├── main_window.py  # 主窗口类
 │       └── tabs/           # 标签页组件
 │           ├── unit_selection.py   # 单元选择
