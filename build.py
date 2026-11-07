@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import sys
 
+from src.version import __version__
+
 
 def clean_build():
     """清理旧的构建文件"""
@@ -148,7 +150,7 @@ def create_readme():
 def main():
     """主构建流程"""
     print("=" * 50)
-    print("单词听写生成器 - 构建工具")
+    print(f"单词听写生成器 v{__version__} - 构建工具")
     print("=" * 50)
 
     # 1. 清理

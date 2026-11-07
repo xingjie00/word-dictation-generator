@@ -16,6 +16,7 @@ import src.db as db
 from src.data_loader import load_config, save_config
 from src.word_selector import select_words, SelectionError, DayPlan
 from src.html_generator import build_full_document
+from src.version import __version__
 from src.gui.tabs.unit_selection import UnitSelectionTab
 from src.gui.tabs.settings import SettingsTab
 from src.gui.tabs.word_library import WordLibraryTab
@@ -71,7 +72,7 @@ class WordDictationGUI(QMainWindow):
 
     def _build_ui(self):
         """设置用户界面"""
-        self.setWindowTitle("单词听写生成器 v3.0")
+        self.setWindowTitle(f"单词听写生成器 v{__version__}")
         self.resize(700, 650)
         self.setMinimumSize(640, 560)
 
@@ -80,7 +81,7 @@ class WordDictationGUI(QMainWindow):
         layout = QVBoxLayout(central)
 
         # 标题
-        title = QLabel("单词听写生成器 v3.0")
+        title = QLabel(f"单词听写生成器 v{__version__}")
         title.setFont(QFont("Microsoft YaHei", 16, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)

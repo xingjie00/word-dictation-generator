@@ -1,6 +1,6 @@
 # src/html_generator.py
 """HTML 文档生成：CSS/HTML 模板常量 + 听写文档构建。"""
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Set
 
 from src.word_selector import DayPlan, WordEntry
 
@@ -122,6 +122,24 @@ _CSS = """\
         .no-print {
             display: none;
         }
+        .answer-page {
+            justify-content: flex-start;
+        }
+        .answer-list {
+            font-size: 13px;
+            column-count: 2;
+            column-gap: 16px;
+        }
+        .answer-item {
+            margin: 0 0 2px;
+            break-inside: avoid;
+        }
+        .answer-day-head {
+            font-weight: bold;
+            color: #0066cc;
+            margin: 6px 0 2px;
+            break-after: avoid;
+        }
         @media screen {
             body {
                 background-color: #f5f5f5;
@@ -241,6 +259,70 @@ def generate_day_page(plan: DayPlan) -> str:
         </div>
     """
 
+    # 断言校验：答题行数必须等于当天实际单词数，不一致时报错而非静默生成
+    rendered_rows = html.count('class="focus-row"') + html.count('class="review-row"')
+    assert rendered_rows == total_words, (
+        f"答题行数({rendered_rows})与当天单词数({total_words})不一致，"
+        f"第{plan.day_num}天生成异常"
+    )
+
+    return html
+
+
+def generate_answer_page(day_plans: List[DayPlan]) -> str:
+    """渲染答案页（<div class="page answer-page">）：按天分组的多列紧凑
+    列表，列出全部单词的英文与释义。
+
+    数据与顺序：直接遍历传入的 day_plans（与题目页同一份数据，不重查），
+    每天按题目顺序（重点 → 复习）取词；同一天内按英文单词去重（共享词
+    既作重点又作复习时只记首次出现的释义），跨天重复正常保留。每天内
+    从 1 重新连续编号。
+
+    视觉格式（紧凑多列）：
+    - 条目 13px（≈10pt，小于题目页正文 14px），行距沿用全局 1.4，条目
+      间距 2px；两栏排布（column-count: 2，栏距 16px），break-inside:
+      avoid 防止条目被栏边界截断；
+    - 每天标题（第N天）独立成行，加粗蓝色小字，break-after: avoid 避免
+      标题孤悬栏/页尾。
+
+    Args:
+        day_plans: 各天的 DayPlan 列表（与题目页共用同一份数据）。
+
+    Returns:
+        HTML 字符串片段。
+    """
+    html = """
+        <div class="page answer-page">
+            <div class="header">
+                <h1>参考答案</h1>
+            </div>
+
+            <div class="answer-list">
+    """
+
+    for plan in day_plans:
+        # 当天单词按题目顺序收集；同一天内去重（共享词只记首次出现）
+        day_words: List[WordEntry] = []
+        seen: Set[str] = set()
+        for item in plan.focus_words + plan.review_words:
+            if item.word not in seen:
+                seen.add(item.word)
+                day_words.append(item)
+        if not day_words:  # 防御：空天不渲染空分组
+            continue
+        html += f"""
+                    <p class="answer-day-head">第{plan.day_num}天</p>
+        """
+        for i, item in enumerate(day_words, 1):
+            html += f"""
+                    <p class="answer-item">{i}. {item.word} — {item.translation}</p>
+            """
+
+    html += """
+            </div>
+        </div>
+    """
+
     return html
 
 
@@ -263,7 +345,7 @@ def build_full_document(
         on_progress: 进度回调 (current_day, total_days)。
 
     Returns:
-        完整 HTML 文档字符串。
+        完整 HTML 文档字符串（末尾含参考答案页；无单词时不含）。
     """
     days = len(day_plans)
     css_indented = "\n".join("    " + line if line.strip() else line for line in _CSS.split("\n"))
@@ -275,6 +357,10 @@ def build_full_document(
             html += '<div style="page-break-after: always;"></div>'
         if on_progress:
             on_progress(i + 1, days)
+
+    # 文末追加参考答案页（复用 .page 分页机制；无单词时省略）
+    if any(plan.focus_words or plan.review_words for plan in day_plans):
+        html += generate_answer_page(day_plans)
 
     html += _HTML_TAIL
     return html
