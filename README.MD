@@ -10,8 +10,9 @@
 - **均衡抽取**：每天的名额按随机权重分配到各单元（保底 1 个/单元），再单元内随机选词，避免单词扎堆在个别章节
 - **独立去重**：重点与复习各自保证当天内部不重复、互不比较；跨天允许再现，天然形成间隔复习
 - **专业文档输出**：自动生成格式规范的HTML文档，包含表格、标题和统计信息
+- **参考答案页**：文档末尾自动追加"参考答案"页，按天分组、两栏紧凑排版，批改无需回查词库
 - **独立预览**：生成前可点击"预览"按钮在浏览器中查看效果，无需保存
-- **词库管理**：在界面中直接新增单元和单词，即时生效
+- **词库管理**：在界面中直接新增、修改、删除单词，即时生效
 - **批量导入**：词库管理支持粘贴或从 .txt 文件批量导入词表（每行"英文 释义"）
 - **SQLite 词库**：单词数据存储在轻量级数据库中，首次运行自动从种子导入
 - **进度反馈**：生成文档时显示进度条
@@ -22,8 +23,8 @@
 word-dictation-generator/
 ├── main.py                 # 程序入口点
 ├── build.py                # 一键打包脚本（PyInstaller）
-├── requirements.txt        # 运行时依赖（PyQt5）
-├── requirements-dev.txt    # 开发依赖（pyinstaller, pytest）
+├── requirements.txt        # 运行时依赖（PyQt6，另含 pyinstaller）
+├── requirements-dev.txt    # 开发依赖（pyinstaller、pytest）
 ├── README.MD               # 项目说明文档
 ├── resources/              # 数据资源目录
 │   ├── config.json         # 用户配置文件
@@ -32,19 +33,22 @@ word-dictation-generator/
 ├── src/                    # 源代码目录
 │   ├── data_loader.py      # 路径工具与配置读写
 │   ├── db.py               # SQLite 词库层（建库/种子导入/查询/追加）
-│   ├── word_selector.py    # 单词选择逻辑（严格跨天去重）
-│   ├── html_generator.py   # HTML文档模板与生成
+│   ├── word_selector.py    # 单词选择逻辑（按天独立抽取，跨天允许重复）
+│   ├── html_generator.py   # HTML 文档生成（题目页 + 参考答案页）
+│   ├── version.py          # 版本号单一来源（__version__）
 │   └── gui/                # 图形界面模块（PyQt6）
 │       ├── main_window.py  # 主窗口类
 │       └── tabs/           # 标签页组件
 │           ├── unit_selection.py   # 单元选择
 │           ├── settings.py         # 参数设置
-│           └── word_library.py     # 词库管理（仅新增）
+│           └── word_library.py     # 词库管理（新增/批量导入/修改/删除）
 └── tests/                  # pytest 测试
     ├── test_db.py                 # SQLite 层
     ├── test_word_selector.py      # 选择逻辑
-    ├── test_html_generator.py     # HTML 生成
-    └── test_batch_import.py       # 批量导入解析
+    ├── test_dictation_count.py    # 抽查次数权重与写回
+    ├── test_html_generator.py     # HTML 生成（题目页 + 答案页）
+    ├── test_batch_import.py       # 批量导入解析
+    └── test_version.py            # 版本号格式
 ```
 
 ## 🚀 快速开始
@@ -84,6 +88,19 @@ python main.py
 
 4. 点击"生成HTML听写文档"按钮，选择保存位置，等待生成完成
 
+生成的文档除每日题目页外，末尾会自动附带一页"参考答案"（见下文）。
+
+### 参考答案页
+
+生成的 HTML 文档最后自动追加一页"参考答案"，打印时独立成最后一页：
+
+- **按天分组**：以"第1天…第N天"小标题分组，组内顺序与题目页（重点 → 复习）一致
+- **条目格式**：`序号. 英文 — 释义`，每天内从 1 连续编号
+- **紧凑两栏排版**：小字号多栏布局，约 90 个单词的答案占 1 页 A4 左右（依浏览器/打印机略有差异）
+- **去重规则**：同一单词同一天只列一次（当天既是重点又是复习时不重复）；跨天重复正常保留，与间隔复习语义一致
+- **释义实时取值**：显示词库当前值，包含通过"词库管理 → 修改所选"改过的内容
+- 空文档（无任何单词）时不会生成空的答案页
+
 ### 词库管理
 在"词库管理"标签页中：
 
@@ -96,6 +113,8 @@ python main.py
 - 可添加多个单词到暂存列表；暂存中可移除未保存的项
 
 - 点击"保存到词库"写入 SQLite 词库，保存后即时生效
+
+- 修改/删除：在已入库单词列表中选中条目，"修改所选"可编辑英文与释义，"删除所选"支持多选批量删除，改动即时生效并反映到后续生成的文档（含答案页）
 
 ## 🗄️ 词库存储说明（SQLite）
 
@@ -151,7 +170,14 @@ python main.py
 ```bash
 python build.py
 ```
-构建产物在 `dist/`：单文件 exe + `resources/`（config.json、words.db 当前词库）。词库开箱即用，无需等待首次导入；删除 words.db 后重启程序可从 exe 内置种子重置词库。
+构建产物在 `dist/`：单文件 exe + `resources/`（config.json、words.db 当前词库）。词库开箱即用，无需等待首次导入；删除 words.db 后重启程序可从 exe 内置种子重置词库。构建横幅会显示当前版本号（来自 `src/version.py`）。
+
+## 🔢 版本号
+
+版本号单一来源：`src/version.py` 中的 `__version__`（语义化版本 MAJOR.MINOR.PATCH，当前 `3.0.0`）。
+
+- GUI 窗口标题、界面横幅与 `build.py` 构建横幅均实时引用该常量，发布新版本只需修改这一处
+- exe 文件属性中的版本信息暂未写入（需后续生成 PyInstaller version-file，属打包流程变更）
 
 ## 🤝 参与贡献
 欢迎提交Issue和Pull Request来改进这个项目。
@@ -162,4 +188,4 @@ python build.py
 
 Copyright (C) 2026 xingjie
 
-本程序是自由软件，你可以依据自由软件基金会发布的 GNU 通用公共许可证（第 3 版）重新分发或修改它。注意：本项目 GUI 基于 PyQt5（GPL v3）构建，分发打包后的 exe 时需同样以 GPL v3 提供并向接收者附上源码与许可证副本。
+本程序是自由软件，你可以依据自由软件基金会发布的 GNU 通用公共许可证（第 3 版）重新分发或修改它。注意：本项目 GUI 基于 PyQt6（GPL v3）构建，分发打包后的 exe 时需同样以 GPL v3 提供并向接收者附上源码与许可证副本。
