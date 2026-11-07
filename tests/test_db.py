@@ -189,3 +189,69 @@ def test_seed_intra_unit_duplicate_keeps_first(tmp_path):
     data = db.load_word_data(d)
     assert [w['word'] for w in data['unit_words']['U1']] == ['a', 'b']
     assert data['unit_words']['U1'][0]['translation'] == '甲1'
+
+
+def test_update_word_translation(tmp_path):
+    """update_word 改释义：成功且保留原位置与抽查次数。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.update_word('U1', 'a', 'a', '甲改', db_path=d) is True
+    assert db.get_unit_words('U1', db_path=d)[0] == {
+        'id': 1, 'word': 'a', 'translation': '甲改', 'dictation_count': 0
+    }
+
+
+def test_update_word_rename(tmp_path):
+    """update_word 改英文：定位与更新均生效。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.update_word('U1', 'b', 'bb', '乙', db_path=d) is True
+    assert [w['word'] for w in db.get_unit_words('U1', db_path=d)] == ['a', 'bb']
+
+
+def test_update_word_duplicate_rejected(tmp_path):
+    """update_word 改成同单元已有单词：IntegrityError 且原记录不变。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    with pytest.raises(sqlite3.IntegrityError):
+        db.update_word('U1', 'b', 'a', '乙', db_path=d)
+    assert [w['word'] for w in db.get_unit_words('U1', db_path=d)] == ['a', 'b']
+
+
+def test_update_word_missing_returns_false(tmp_path):
+    """update_word：单元或单词不存在返回 False。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.update_word('UX', 'a', 'x', '叉', db_path=d) is False
+    assert db.update_word('U1', 'zz', 'x', '叉', db_path=d) is False
+
+
+def test_delete_word_removes_record(tmp_path):
+    """delete_word：删除返回 True，重载后不再出现。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.delete_word('U1', 'a', db_path=d) is True
+    assert [w['word'] for w in db.get_unit_words('U1', db_path=d)] == ['b']
+    data = db.load_word_data(d)
+    assert 'a' not in [w['word'] for w in data['unit_words']['U1']]
+
+
+def test_delete_word_missing_returns_false(tmp_path):
+    """delete_word：单元或单词不存在返回 False（不抛异常）。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.delete_word('UX', 'a', db_path=d) is False
+    assert db.delete_word('U1', 'zz', db_path=d) is False
+
+
+def test_selector_uses_updated_word(tmp_path):
+    """改词后选词使用新英文（word_selector 无需同步）。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    db.update_word('U1', 'a', 'a2', '甲改', db_path=d)
+    data = db.load_word_data(d)
+    plans = select_words(data, ['U1'], ['U2'], focus_count=2, review_count=1, days=1,
+                         rng=random.Random(42))
+    all_words = [w.word for w in plans[0].focus_words] + [w.word for w in plans[0].review_words]
+    assert 'a' not in all_words
+    assert 'a2' in all_words

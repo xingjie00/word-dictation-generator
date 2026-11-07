@@ -286,6 +286,76 @@ def add_words(unit_name: str, words: List[Tuple[str, str]], db_path: Optional[st
         conn.close()
 
 
+def update_word(unit_name: str, old_word: str, new_word: str, new_translation: str,
+                db_path: Optional[str] = None) -> bool:
+    """更新已入库单词的英文与释义（按单元名 + 原英文定位；dictation_count 保留）。
+
+    Args:
+        unit_name: 单元名。
+        old_word: 原英文单词。
+        new_word: 新英文单词。
+        new_translation: 新中文释义。
+        db_path: 数据库路径；None 用默认。
+
+    Returns:
+        记录（单元或单词）不存在返回 False；成功返回 True。
+        new_word 与同单元内其他单词重复时触发 sqlite3.IntegrityError
+        （调用方应预检，UNIQUE(unit_id, word) 为兜底）。
+    """
+    path = _resolve(db_path)
+    init_db(path)
+    conn = _connect(path)
+    try:
+        row = conn.execute("SELECT id FROM units WHERE name = ?", (unit_name,)).fetchone()
+        if row is None:
+            return False
+        cur = conn.execute(
+            "UPDATE words SET word = ?, translation = ? WHERE unit_id = ? AND word = ?",
+            (new_word, new_translation, row[0], old_word)
+        )
+        if cur.rowcount == 0:
+            return False
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def delete_word(unit_name: str, word: str, db_path: Optional[str] = None) -> bool:
+    """删除已入库单词（按单元名 + 英文定位）。
+
+    Args:
+        unit_name: 单元名。
+        word: 英文单词。
+        db_path: 数据库路径；None 用默认。
+
+    Returns:
+        是否真正删除了记录（单元或单词不存在返回 False）。
+        UNIQUE(unit_id, word) 保证同单元内单词唯一，至多删除一行。
+    """
+    path = _resolve(db_path)
+    init_db(path)
+    conn = _connect(path)
+    try:
+        cur = conn.execute(
+            "DELETE FROM words WHERE unit_id = (SELECT id FROM units WHERE name = ?) "
+            "AND word = ?",
+            (unit_name, word)
+        )
+        if cur.rowcount == 0:
+            return False
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def increment_dictation_counts(word_ids: List[int],
                                db_path: Optional[str] = None) -> None:
     """批量累加单词抽查次数（单事务，任一失败整体回滚）。

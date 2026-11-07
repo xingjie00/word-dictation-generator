@@ -1,7 +1,7 @@
 # src/gui/tabs/word_library.py
-"""仅新增式词库管理标签页：追加新单元、向已有单元追加新单词、批量导入。
+"""词库管理标签页：追加新单元、向已有单元追加新单词、批量导入、修改/删除已入库单词。
 
-数据直接读写 SQLite（src/db.py），无内存别名机制；保存后经 on_data_changed
+数据直接读写 SQLite（src/db.py），无内存别名机制；变更后经 on_data_changed
 通知主窗口重载词库并刷新单元选择。
 """
 import os
@@ -9,9 +9,11 @@ import re
 import sqlite3
 from typing import Callable, List, Optional, Tuple
 
-from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QFileDialog, QFormLayout,
-                             QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                             QListWidget, QPlainTextEdit, QPushButton,
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QDialog,
+                             QDialogButtonBox, QFileDialog, QFormLayout, QFrame,
+                             QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+                             QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton,
                              QRadioButton, QScrollArea, QVBoxLayout, QWidget)
 
 import src.db as db
@@ -51,8 +53,27 @@ def parse_batch_text(text: str) -> Tuple[List[Tuple[str, str]], List[Tuple[int, 
     return entries, errors
 
 
+class _EditWordDialog(QDialog):
+    """编辑已入库单词的模态对话框（英文 + 释义）。"""
+
+    def __init__(self, word: str, translation: str,
+                 parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setWindowTitle("修改单词")
+        form = QFormLayout(self)
+        self.word_edit = QLineEdit(word)
+        form.addRow("英文单词:", self.word_edit)
+        self.translation_edit = QLineEdit(translation)
+        form.addRow("中文释义:", self.translation_edit)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        form.addRow(buttons)
+
+
 class WordLibraryTab(QWidget):
-    """词库管理标签页（仅新增）。"""
+    """词库管理标签页。"""
 
     def __init__(self, parent: Optional[QWidget] = None,
                  on_data_changed: Optional[Callable[[], None]] = None):
@@ -168,6 +189,39 @@ class WordLibraryTab(QWidget):
         staging_layout.addLayout(btn_row)
 
         layout.addWidget(staging_group)
+
+        # ── 已入库单词 ──
+        library_group = QGroupBox("已入库单词")
+        library_layout = QVBoxLayout(library_group)
+
+        unit_row = QHBoxLayout()
+        unit_row.addWidget(QLabel("单元:"))
+        self.library_unit_combo = QComboBox()
+        self.library_unit_combo.addItems(db.get_unit_names())
+        unit_row.addWidget(self.library_unit_combo, 1)
+        library_layout.addLayout(unit_row)
+
+        self.library_list = QListWidget()
+        self.library_list.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection)
+        library_layout.addWidget(self.library_list)
+
+        lib_btn_row = QHBoxLayout()
+        edit_btn = QPushButton("修改所选")
+        edit_btn.clicked.connect(self._edit_library_word)
+        lib_btn_row.addWidget(edit_btn)
+
+        delete_btn = QPushButton("删除所选")
+        delete_btn.clicked.connect(self._delete_library_words)
+        lib_btn_row.addWidget(delete_btn)
+        lib_btn_row.addStretch(1)
+        library_layout.addLayout(lib_btn_row)
+
+        self.library_unit_combo.currentTextChanged.connect(
+            lambda _: self._reload_library_list())
+        self._reload_library_list()
+
+        layout.addWidget(library_group)
 
         # ── 状态栏 ──
         self.status_label = QLabel("")
@@ -347,8 +401,116 @@ class WordLibraryTab(QWidget):
         # 刷新已有单元下拉框
         self.existing_unit_combo.clear()
         self.existing_unit_combo.addItems(db.get_unit_names())
+        # 刷新已入库单词区（单元下拉 + 单词列表）
+        self._refresh_library_units()
         # 通知主窗口
         if self.on_data_changed:
             self.on_data_changed()
         # 状态提示
         self._set_status(f"✅ 已保存到 \"{unit_name}\"", "green")
+
+    # ── 已入库单词的修改 / 删除 ─────────────────────────────────────
+
+    def _reload_library_list(self):
+        """重载已入库单词列表（当前选中单元）。"""
+        self.library_list.clear()
+        unit = self.library_unit_combo.currentText().strip()
+        if not unit:
+            return
+        for w in db.get_unit_words(unit):
+            item = QListWidgetItem(f"{w['word']} — {w['translation']}")
+            # 英文/释义存入 item 数据；展示文本含分隔符，回读时不做文本解析
+            item.setData(Qt.ItemDataRole.UserRole, w['word'])
+            item.setData(Qt.ItemDataRole.UserRole + 1, w['translation'])
+            self.library_list.addItem(item)
+
+    def _refresh_library_units(self):
+        """刷新已入库单元下拉框并重载单词列表（原选中单元仍存在则保持）。"""
+        current = self.library_unit_combo.currentText()
+        self.library_unit_combo.blockSignals(True)
+        self.library_unit_combo.clear()
+        self.library_unit_combo.addItems(db.get_unit_names())
+        idx = self.library_unit_combo.findText(current)
+        if idx >= 0:
+            self.library_unit_combo.setCurrentIndex(idx)
+        self.library_unit_combo.blockSignals(False)
+        self._reload_library_list()
+
+    def _edit_library_word(self):
+        """修改选中的一条已入库单词（编辑对话框 → db.update_word）。"""
+        unit = self.library_unit_combo.currentText().strip()
+        if not unit:
+            self._set_status("⚠️ 请先选择单元", "red")
+            return
+        selected = self.library_list.selectedItems()
+        if len(selected) != 1:
+            self._set_status("⚠️ 请先选中一条（且仅一条）要修改的单词", "red")
+            return
+        item = selected[0]
+        old_word = item.data(Qt.ItemDataRole.UserRole)
+        old_translation = item.data(Qt.ItemDataRole.UserRole + 1)
+
+        dlg = _EditWordDialog(old_word, old_translation, self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        new_word = dlg.word_edit.text().strip()
+        new_translation = dlg.translation_edit.text().strip()
+        if not new_word or not new_translation:
+            self._set_status("⚠️ 英文单词和中文释义不能为空", "red")
+            return
+        if new_word == old_word and new_translation == old_translation:
+            self._set_status("未做修改", "gray")
+            return
+        # 同单元内新单词名重复预检（与保存流程一致，UNIQUE 约束为兜底）
+        if new_word != old_word and new_word in {
+                w['word'] for w in db.get_unit_words(unit)}:
+            self._set_status(f"⚠️ 单元内已有重复单词: {new_word}", "red")
+            return
+        try:
+            ok = db.update_word(unit, old_word, new_word, new_translation)
+        except (sqlite3.IntegrityError, OSError):
+            self._set_status("❌ 修改失败，请检查数据或文件权限", "red")
+            return
+        if not ok:
+            self._set_status("⚠️ 该记录不存在，列表已刷新", "red")
+        else:
+            if self.on_data_changed:
+                self.on_data_changed()
+            self._set_status("✅ 已更新 1 条", "green")
+        self._reload_library_list()
+
+    def _delete_library_words(self):
+        """删除选中的一条或多条已入库单词（确认框 → 逐条 db.delete_word）。"""
+        unit = self.library_unit_combo.currentText().strip()
+        if not unit:
+            self._set_status("⚠️ 请先选择单元", "red")
+            return
+        selected = self.library_list.selectedItems()
+        if not selected:
+            self._set_status("⚠️ 请先选择要删除的单词", "red")
+            return
+        words = [it.data(Qt.ItemDataRole.UserRole) for it in selected]
+        ret = QMessageBox.question(
+            self, "删除确认",
+            f"确定从单元 \"{unit}\" 删除选中的 {len(words)} 个单词？\n该操作不可恢复。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+
+        deleted = 0
+        try:
+            for w in words:
+                if db.delete_word(unit, w):
+                    deleted += 1
+        except (sqlite3.IntegrityError, OSError):
+            self._set_status("❌ 删除失败，请检查数据或文件权限", "red")
+            self._reload_library_list()
+            return
+        self._reload_library_list()
+        if self.on_data_changed:
+            self.on_data_changed()
+        if deleted == len(words):
+            self._set_status(f"✅ 已删除 {deleted} 条", "green")
+        else:
+            self._set_status(f"⚠️ 已删除 {deleted}/{len(words)} 条（其余记录不存在）", "gray")
