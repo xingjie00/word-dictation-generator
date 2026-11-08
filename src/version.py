@@ -4,4 +4,4 @@
 格式：语义化版本 MAJOR.MINOR.PATCH。发布时只需修改此处。
 """
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"

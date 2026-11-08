@@ -1,5 +1,8 @@
 # tests/test_batch_import.py
-from src.gui.tabs.word_library import parse_batch_text
+import json
+
+import src.db as db
+from src.gui.tabs.word_library import build_export_data, parse_batch_text
 
 
 def test_basic_parse_with_mixed_separators():
@@ -53,3 +56,39 @@ def test_empty_text_yields_nothing():
     """空文本 → 无条目、无错误。"""
     entries, errors = parse_batch_text("")
     assert entries == [] and errors == []
+
+
+def test_build_export_data_strips_runtime_fields():
+    """导出结构只保留 unit/word/translation，丢弃 id 与 dictation_count。"""
+    data = {'units': ['U1', 'U2'], 'unit_words': {
+        'U1': [{'id': 1, 'word': 'a', 'translation': '甲', 'dictation_count': 3},
+               {'id': 2, 'word': 'b', 'translation': '乙', 'dictation_count': 0}],
+        'U2': [],
+    }}
+    export = build_export_data(data)
+    assert export == {'word_list': [
+        {'unit': 'U1', 'words': [{'word': 'a', 'translation': '甲'},
+                                 {'word': 'b', 'translation': '乙'}]},
+        {'unit': 'U2', 'words': []},
+    ]}
+
+
+def test_export_round_trip_as_seed(tmp_path):
+    """导出的 JSON 可直接作为种子文件重建词库（格式与 words.json 同构）。"""
+    d = str(tmp_path / "words.db")
+    seed = tmp_path / "seed.json"
+    seed.write_text(json.dumps({"word_list": [
+        {"unit": "U1", "words": [{"word": "a", "translation": "甲"}]},
+    ]}, ensure_ascii=False), encoding='utf-8')
+    db.init_db(d, seed_json=str(seed))
+
+    export_path = tmp_path / "export.json"
+    with open(export_path, 'w', encoding='utf-8') as f:
+        json.dump(build_export_data(db.load_word_data(d)), f,
+                  ensure_ascii=False, indent=2)
+
+    d2 = str(tmp_path / "words2.db")
+    db.init_db(d2, seed_json=str(export_path))
+    data = db.load_word_data(d2)
+    assert data['units'] == ['U1']
+    assert [w['word'] for w in data['unit_words']['U1']] == ['a']

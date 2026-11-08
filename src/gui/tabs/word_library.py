@@ -1,18 +1,21 @@
 # src/gui/tabs/word_library.py
-"""词库管理标签页：追加新单元、向已有单元追加新单词、批量导入、修改/删除已入库单词。
+"""词库管理标签页：追加新单元、向已有单元追加新单词、批量导入、修改/删除已入库单词、重命名/删除单元、导出词库。
 
 数据直接读写 SQLite（src/db.py），无内存别名机制；变更后经 on_data_changed
 通知主窗口重载词库并刷新单元选择。
 """
+import json
 import os
 import re
 import sqlite3
-from typing import Callable, List, Optional, Tuple
+from datetime import datetime
+from typing import Callable, Dict, List, Optional, Tuple
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QDialog,
                              QDialogButtonBox, QFileDialog, QFormLayout, QFrame,
-                             QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+                             QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
+                             QListWidget,
                              QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton,
                              QRadioButton, QScrollArea, QVBoxLayout, QWidget)
 
@@ -51,6 +54,21 @@ def parse_batch_text(text: str) -> Tuple[List[Tuple[str, str]], List[Tuple[int, 
         seen.add(word)
         entries.append((word, translation))
     return entries, errors
+
+
+def build_export_data(data: Dict) -> Dict:
+    """把 db.load_word_data 的结果组装为与种子 words.json 同构的导出结构。
+
+    Returns:
+        {'word_list': [{'unit': 单元名, 'words': [{'word':…, 'translation':…}, …]}, …]}
+        不含 dictation_count（运行时统计，不属于词表内容）；空单元保留空 words 列表。
+    """
+    word_list = []
+    for unit in data['units']:
+        words = [{'word': w['word'], 'translation': w['translation']}
+                 for w in data['unit_words'].get(unit, [])]
+        word_list.append({'unit': unit, 'words': words})
+    return {'word_list': word_list}
 
 
 class _EditWordDialog(QDialog):
@@ -161,6 +179,10 @@ class WordLibraryTab(QWidget):
         parse_btn = QPushButton("解析加入暂存")
         parse_btn.clicked.connect(self._parse_batch)
         batch_btn_row.addWidget(parse_btn)
+
+        clear_text_btn = QPushButton("清空文本")
+        clear_text_btn.clicked.connect(self._clear_batch_text)
+        batch_btn_row.addWidget(clear_text_btn)
         batch_btn_row.addStretch(1)
         batch_layout.addLayout(batch_btn_row)
 
@@ -177,6 +199,10 @@ class WordLibraryTab(QWidget):
         remove_btn = QPushButton("移除暂存项")
         remove_btn.clicked.connect(self._remove_staging_item)
         btn_row.addWidget(remove_btn)
+
+        clear_staging_btn = QPushButton("清空暂存")
+        clear_staging_btn.clicked.connect(self._clear_staging)
+        btn_row.addWidget(clear_staging_btn)
 
         save_btn = QPushButton("保存到词库")
         save_btn.setStyleSheet(
@@ -214,7 +240,19 @@ class WordLibraryTab(QWidget):
         delete_btn = QPushButton("删除所选")
         delete_btn.clicked.connect(self._delete_library_words)
         lib_btn_row.addWidget(delete_btn)
+
+        delete_unit_btn = QPushButton("删除整个单元")
+        delete_unit_btn.clicked.connect(self._delete_unit)
+        lib_btn_row.addWidget(delete_unit_btn)
+
+        rename_unit_btn = QPushButton("修改单元名")
+        rename_unit_btn.clicked.connect(self._rename_unit)
+        lib_btn_row.addWidget(rename_unit_btn)
         lib_btn_row.addStretch(1)
+
+        export_btn = QPushButton("导出词库…")
+        export_btn.clicked.connect(self._export_library)
+        lib_btn_row.addWidget(export_btn)
         library_layout.addLayout(lib_btn_row)
 
         self.library_unit_combo.currentTextChanged.connect(
@@ -275,6 +313,22 @@ class WordLibraryTab(QWidget):
         self.staging_list.takeItem(row)
         self._set_status(f"已移除（剩余 {len(self.staging)} 项）", "gray")
 
+    def _clear_staging(self):
+        """清空全部暂存单词（确认框 → 清空内存与列表）"""
+        if not self.staging:
+            self._set_status("⚠️ 暂存列表为空", "red")
+            return
+        ret = QMessageBox.question(
+            self, "清空确认",
+            f"确定清空全部 {len(self.staging)} 条暂存单词？（尚未保存到词库）",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+        self.staging.clear()
+        self.staging_list.clear()
+        self._set_status("已清空暂存", "gray")
+
     def _import_from_file(self):
         """从 .txt 文件载入词表文本到批量导入输入框"""
         path, _ = QFileDialog.getOpenFileName(
@@ -334,6 +388,14 @@ class WordLibraryTab(QWidget):
             self._set_status("；".join(parts + skipped), "gray")
         else:
             self._set_status("；".join(parts), "green")
+
+    def _clear_batch_text(self):
+        """清空批量导入文本框"""
+        if not self.batch_edit.toPlainText().strip():
+            self._set_status("批量导入文本已为空", "gray")
+            return
+        self.batch_edit.clear()
+        self._set_status("已清空批量导入文本", "gray")
 
     def _save_to_library(self):
         """将暂存单词保存到词库（写 SQLite）"""
@@ -514,3 +576,105 @@ class WordLibraryTab(QWidget):
             self._set_status(f"✅ 已删除 {deleted} 条", "green")
         else:
             self._set_status(f"⚠️ 已删除 {deleted}/{len(words)} 条（其余记录不存在）", "gray")
+
+    def _delete_unit(self):
+        """删除当前选中的整个单元及其全部单词（确认框 → db.delete_unit）。"""
+        unit = self.library_unit_combo.currentText().strip()
+        if not unit:
+            self._set_status("⚠️ 请先选择单元", "red")
+            return
+        try:
+            word_count = len(db.get_unit_words(unit))
+        except OSError:
+            self._set_status("❌ 读取单元信息失败，请检查文件权限", "red")
+            return
+        ret = QMessageBox.question(
+            self, "删除单元确认",
+            f"确定删除单元 \"{unit}\" 及其全部 {word_count} 个单词？\n该操作不可恢复。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            ok = db.delete_unit(unit)
+        except (sqlite3.IntegrityError, OSError):
+            self._set_status("❌ 删除失败，请检查数据或文件权限", "red")
+            return
+        if ok:
+            self._set_status(f"✅ 已删除单元 \"{unit}\"（含 {word_count} 个单词）", "green")
+        else:
+            self._set_status("⚠️ 该单元不存在，列表已刷新", "red")
+        # 刷新两处单元下拉框与单词列表（与 _after_save 相同的刷新路径）
+        self.existing_unit_combo.clear()
+        self.existing_unit_combo.addItems(db.get_unit_names())
+        self._refresh_library_units()
+        if self.on_data_changed:
+            self.on_data_changed()
+
+    def _rename_unit(self):
+        """重命名当前选中的单元（输入对话框 → db.rename_unit）。"""
+        unit = self.library_unit_combo.currentText().strip()
+        if not unit:
+            self._set_status("⚠️ 请先选择单元", "red")
+            return
+        new_name, confirmed = QInputDialog.getText(
+            self, "修改单元名", f"将单元 \"{unit}\" 重命名为：", text=unit)
+        if not confirmed:
+            return
+        new_name = new_name.strip()
+        if not new_name:
+            self._set_status("⚠️ 新单元名不能为空", "red")
+            return
+        if new_name == unit:
+            self._set_status("未做修改", "gray")
+            return
+        if db.unit_exists(new_name):
+            self._set_status(f"⚠️ 单元 \"{new_name}\" 已存在", "red")
+            return
+        try:
+            renamed = db.rename_unit(unit, new_name)
+        except (sqlite3.IntegrityError, OSError):
+            self._set_status("❌ 修改失败，请检查数据或文件权限", "red")
+            return
+        if not renamed:
+            self._set_status("⚠️ 该单元不存在，列表已刷新", "red")
+            self._refresh_library_units()
+            return
+        self._set_status(f"✅ 已将单元 \"{unit}\" 重命名为 \"{new_name}\"", "green")
+        # 刷新两处单元下拉框，并保持重命名后的单元为当前选中
+        names = db.get_unit_names()
+        self.existing_unit_combo.clear()
+        self.existing_unit_combo.addItems(names)
+        self.existing_unit_combo.setCurrentText(new_name)
+        self.library_unit_combo.blockSignals(True)
+        self.library_unit_combo.clear()
+        self.library_unit_combo.addItems(names)
+        idx = self.library_unit_combo.findText(new_name)
+        if idx >= 0:
+            self.library_unit_combo.setCurrentIndex(idx)
+        self.library_unit_combo.blockSignals(False)
+        self._reload_library_list()
+        if self.on_data_changed:
+            self.on_data_changed()
+
+    def _export_library(self):
+        """导出全部词库为 JSON 文件（与种子 words.json 同构，可再次导入）。"""
+        data = db.load_word_data()
+        if not data['units']:
+            self._set_status("⚠️ 词库为空，无内容可导出", "red")
+            return
+        total_words = sum(len(ws) for ws in data['unit_words'].values())
+        default_name = f"词库备份-{datetime.now():%Y%m%d}.json"
+        path, _ = QFileDialog.getSaveFileName(
+            self, "导出词库", default_name, "JSON 文件 (*.json);;所有文件 (*)")
+        if not path:
+            return
+        try:
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(build_export_data(data), f, ensure_ascii=False, indent=2)
+        except OSError as e:
+            self._set_status(f"❌ 导出失败: {e}", "red")
+            return
+        self._set_status(
+            f"✅ 已导出全部 {len(data['units'])} 个单元 / {total_words} 个单词到 "
+            f"{os.path.basename(path)}", "green")

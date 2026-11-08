@@ -244,7 +244,51 @@ def test_delete_word_missing_returns_false(tmp_path):
     assert db.delete_word('U1', 'zz', db_path=d) is False
 
 
-def test_selector_uses_updated_word(tmp_path):
+def test_delete_unit_cascades_words(tmp_path):
+    """delete_unit：单元与其全部单词一并删除，其余单元不受影响。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.delete_unit('U1', db_path=d) is True
+    data = db.load_word_data(d)
+    assert data['units'] == ['U2']
+    assert 'U1' not in data['unit_words']
+    assert [w['word'] for w in db.get_unit_words('U2', db_path=d)] == ['c']
+
+
+def test_delete_unit_missing_returns_false(tmp_path):
+    """delete_unit：单元不存在返回 False（不抛异常）。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.delete_unit('UX', db_path=d) is False
+
+
+def test_rename_unit_preserves_order_and_words(tmp_path):
+    """rename_unit：改名后单元 id 不变（顺序保持），单词与抽查次数不受影响。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    db.increment_dictation_counts([1, 1], db_path=d)  # word a → 抽查 2 次
+    assert db.rename_unit('U1', 'U1改名', db_path=d) is True
+    data = db.load_word_data(d)
+    assert data['units'] == ['U1改名', 'U2']
+    assert data['unit_words']['U1改名'] == [
+        {'id': 1, 'word': 'a', 'translation': '甲', 'dictation_count': 2},
+        {'id': 2, 'word': 'b', 'translation': '乙', 'dictation_count': 0},
+    ]
+
+
+def test_rename_unit_missing_returns_false(tmp_path):
+    """rename_unit：原单元不存在返回 False（不抛异常）。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    assert db.rename_unit('UX', '任意', db_path=d) is False
+
+
+def test_rename_unit_duplicate_raises(tmp_path):
+    """rename_unit：新名与已有单元重复触发 UNIQUE 约束（调用方预检，UNIQUE 为兜底）。"""
+    d = str(tmp_path / "words.db")
+    db.init_db(d, seed_json=_seed_file(tmp_path))
+    with pytest.raises(sqlite3.IntegrityError):
+        db.rename_unit('U2', 'U1', db_path=d)
     """改词后选词使用新英文（word_selector 无需同步）。"""
     d = str(tmp_path / "words.db")
     db.init_db(d, seed_json=_seed_file(tmp_path))

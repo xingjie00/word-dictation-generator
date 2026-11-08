@@ -356,6 +356,63 @@ def delete_word(unit_name: str, word: str, db_path: Optional[str] = None) -> boo
         conn.close()
 
 
+def delete_unit(unit_name: str, db_path: Optional[str] = None) -> bool:
+    """删除整个单元（其单词经外键 ON DELETE CASCADE 一并删除）。
+
+    Args:
+        unit_name: 单元名。
+        db_path: 数据库路径；None 用默认。
+
+    Returns:
+        是否真正删除了单元（单元不存在返回 False）。
+        级联删除依赖 _connect 开启的 foreign_keys，绕开本模块直连时勿关闭。
+    """
+    path = _resolve(db_path)
+    init_db(path)
+    conn = _connect(path)
+    try:
+        cur = conn.execute("DELETE FROM units WHERE name = ?", (unit_name,))
+        if cur.rowcount == 0:
+            return False
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def rename_unit(old_name: str, new_name: str, db_path: Optional[str] = None) -> bool:
+    """重命名单元（只改 units.name，单元顺序、单词与抽查次数均不受影响）。
+
+    Args:
+        old_name: 原单元名。
+        new_name: 新单元名。
+        db_path: 数据库路径；None 用默认。
+
+    Returns:
+        原单元不存在返回 False；成功返回 True。
+        new_name 与已有单元重复时触发 sqlite3.IntegrityError
+        （调用方应预检，units.name UNIQUE 为兜底）。
+    """
+    path = _resolve(db_path)
+    init_db(path)
+    conn = _connect(path)
+    try:
+        cur = conn.execute("UPDATE units SET name = ? WHERE name = ?",
+                           (new_name, old_name))
+        if cur.rowcount == 0:
+            return False
+        conn.commit()
+        return True
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def increment_dictation_counts(word_ids: List[int],
                                db_path: Optional[str] = None) -> None:
     """批量累加单词抽查次数（单事务，任一失败整体回滚）。
