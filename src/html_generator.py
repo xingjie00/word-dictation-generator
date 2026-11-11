@@ -13,6 +13,10 @@ _CSS = """\
             padding: 0;
             box-sizing: border-box;
         }
+        @page {
+            size: A4;
+            margin: 0;
+        }
         body {
             font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
             font-size: 14px;
@@ -22,19 +26,26 @@ _CSS = """\
         }
         @media print {
             .page {
+                /* 每页恰为一张 A4：min-height 置 0 覆盖屏幕预览规则，避免轻微溢出
+                   在部分打印机上多出空白页；分页由 .page 自身规则驱动，页间不再
+                   插入任何带 page-break 的空 div（那会在分页后再强制分页一次） */
+                min-height: 0;
+                height: 297mm;
+                box-sizing: border-box;
                 page-break-after: always;
-                height: 100vh;
+                break-after: page;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
             }
             .page:last-child {
                 page-break-after: auto;
+                break-after: auto;
             }
         }
         .page {
             padding: 20mm;
-            min-height: 297mm; /* A4纸高度 */
+            min-height: 297mm; /* A4纸高度（仅屏幕预览；打印时上方 @media print 规则覆盖） */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -353,8 +364,8 @@ def build_full_document(
 
     for i, plan in enumerate(day_plans):
         html += generate_day_page(plan)
-        if i < days - 1:
-            html += '<div style="page-break-after: always;"></div>'
+        # 天与天之间不加任何空分页 div：.page 自身的 page-break-after 规则
+        # 已驱动分页，额外空 div 会在分页后再强制分页一次，产生整页空白
         if on_progress:
             on_progress(i + 1, days)
 

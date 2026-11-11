@@ -46,6 +46,49 @@ def test_translation_whitespace_normalized():
     assert entries == [('apple', 'n. 苹果')]
 
 
+def test_phrase_split_at_cjk_boundary():
+    """含空格的英文短语：中英分界由中文起点而非空格决定。"""
+    entries, errors = parse_batch_text(
+        "a lot of 很多\nthank you 谢谢你\nvery much 非常")
+    assert entries == [('a lot of', '很多'),
+                       ('thank you', '谢谢你'),
+                       ('very much', '非常')]
+    assert errors == []
+
+
+def test_explicit_separators_and_no_hyphen_false_cut():
+    """显式分隔符逐一生效；无空格连字符（well-known）不被误切。"""
+    entries, errors = parse_batch_text(
+        "well-known 著名的\nhello 你好\napple\t苹果\npear|梨\nplum：李子\n"
+        "a lot of — 很多\ncat,猫\ndog;狗\nwin v. 胜利")
+    assert entries == [
+        ('well-known', '著名的'),
+        ('hello', '你好'),
+        ('apple', '苹果'),
+        ('pear', '梨'),
+        ('plum', '李子'),
+        ('a lot of', '很多'),
+        ('cat', '猫'),
+        ('dog', '狗'),
+        ('win', 'v. 胜利'),
+    ]
+    assert errors == []
+
+
+def test_separator_after_cjk_is_not_a_separator():
+    """分隔符出现在中文之后时只是释义内标点，不参与切分。"""
+    entries, _ = parse_batch_text("apple 苹果, 一种水果")
+    assert entries == [('apple', '苹果, 一种水果')]
+
+
+def test_invalid_lines_reported_without_half_data():
+    """只有英文 / 只有中文 / 中英倒置的行进入失败汇总，不产生半条数据。"""
+    entries, errors = parse_batch_text("abc\n你好\napple\n苹果,香蕉")
+    assert entries == []
+    assert errors == [(1, '缺少释义'), (2, '缺少英文单词'),
+                      (3, '缺少释义'), (4, '缺少英文单词')]
+
+
 def test_word_stripped():
     """英文单词两侧的空白被去除。"""
     entries, _ = parse_batch_text("  apple   苹果  ")

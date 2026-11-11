@@ -21,14 +21,18 @@ class SettingsTab(QWidget):
 
         self.focus_spin = QSpinBox()
         self.focus_spin.setRange(0, 50)
+        self.focus_spin.setSuffix(" 个")
+        self.focus_spin.setMaximumWidth(120)   # 窗口拉宽时数字框不应无限拉伸
         count_form.addRow("每天重点单词数量:", self.focus_spin)
 
         self.total_spin = QSpinBox()
         self.total_spin.setRange(1, 100)
+        self.total_spin.setSuffix(" 个")
+        self.total_spin.setMaximumWidth(120)
         count_form.addRow("每天总单词数:", self.total_spin)
 
         self.review_label = QLabel()
-        self.review_label.setStyleSheet("color: blue;")
+        self.review_label.setProperty("status", "info")
         count_form.addRow("每天复习单词数量:", self.review_label)
 
         layout.addWidget(count_group)
@@ -39,9 +43,13 @@ class SettingsTab(QWidget):
 
         self.days_spin = QSpinBox()
         self.days_spin.setRange(1, 30)
+        self.days_spin.setSuffix(" 天")
+        self.days_spin.setMaximumWidth(120)
         gen_form.addRow("生成天数:", self.days_spin)
 
         self.filename_edit = QLineEdit()
+        self.filename_edit.setPlaceholderText("默认：单词听写")
+        self.filename_edit.setMaximumWidth(360)
         gen_form.addRow("输出文件名:", self.filename_edit)
 
         layout.addWidget(gen_group)
@@ -62,8 +70,9 @@ class SettingsTab(QWidget):
         self._update_review_label()
 
     def _update_review_label(self, *_args):
-        """更新复习单词数显示（= 总数 - 重点数）"""
-        self.review_label.setText(str(self.total_spin.value() - self.focus_spin.value()))
+        """更新复习单词数显示（= 总数 − 重点数，自动推导，不可手改）"""
+        review = self.total_spin.value() - self.focus_spin.value()
+        self.review_label.setText(f"{review} 个（自动计算：总数 − 重点）")
 
     # ── 对外接口 ─────────────────────────────────────────────────────
 
