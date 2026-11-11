@@ -21,15 +21,57 @@ from PyQt6.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QDialog
 
 import src.db as db
 
-# 批量导入的行分隔符：空格 / Tab / 中英文逗号 / 中英文分号
-_BATCH_SEP_RE = re.compile(r'[\s,，;；]+')
+# 批量导入的显式分隔符（优先级从上到下）：制表符 / 半全角竖线 / 冒号 /
+# 逗号 / 分号 / 带空格的连字符-破折号。连字符必须两侧有空白，避免
+# well-known 类复合词被误切。逗号/分号为旧版规则与占位示例（cat,猫）保留兼容。
+_BATCH_EXPLICIT_SEP_RE = re.compile(
+    r'\t+'
+    r'|\s*[|｜]\s*'
+    r'|\s*[:：]\s*'
+    r'|\s*[,，]\s*'
+    r'|\s*[;；]\s*'
+    r'|\s+[—-]\s+'
+)
+_BATCH_FIRST_CJK_RE = re.compile(r'[一-鿿]')
+# 词性标注 token（"apple n. 苹果" 类行）：首个空格后紧跟词性标记时，
+# 分界在第一个空格，标注保留在释义开头
+_BATCH_POS_TOKEN_RE = re.compile(
+    r'^(?:n|v|vt|vi|adj|adv|prep|conj|pron|art|num|aux|int|interj|pl|phrase|abbr)\.?$',
+    re.IGNORECASE)
+
+
+def _split_batch_line(line: str) -> Optional[Tuple[str, str]]:
+    """切分一行「英文 释义」为二元组；无法切分时返回 None。
+
+    规则（从强到弱）：
+    1. 显式分隔符：仅当首个分隔符出现在首个 CJK 字符之前才生效——
+       释义内部的逗号/分号（如 "n. 苹果, 一种水果"）不属于分隔符；
+    2. 词性标注行（apple n. 苹果）：按第一个空格切，标注留在释义中；
+    3. CJK 回退：英文短语可含空格，中英分界由中文起点而非空格决定
+       （a lot of 很多 → a lot of + 很多）。
+    """
+    sep = _BATCH_EXPLICIT_SEP_RE.search(line)
+    cjk = _BATCH_FIRST_CJK_RE.search(line)
+    if sep and (cjk is None or sep.start() < cjk.start()):
+        en, zh = line[:sep.start()], line[sep.end():]
+        if en.strip() and zh.strip():
+            return en.strip(), zh.strip()
+        return None   # 用户显式给了分隔符却缺一侧：按格式错误处理
+    tokens = line.split()
+    if len(tokens) >= 3 and _BATCH_POS_TOKEN_RE.match(tokens[1]):
+        return tokens[0], ' '.join(tokens[1:])
+    if cjk:
+        en, zh = line[:cjk.start()].strip(), line[cjk.start():].strip()
+        if en and zh:
+            return en, zh
+    return None
 
 
 def parse_batch_text(text: str) -> Tuple[List[Tuple[str, str]], List[Tuple[int, str]]]:
-    """解析批量导入文本：每行一个单词，格式「英文 释义」（分隔符见 _BATCH_SEP_RE）。
+    """解析批量导入文本：每行一条，格式「英文 释义」（分隔规则见 _split_batch_line）。
 
-    释义中允许继续含空格/标点（如 "apple n. 苹果" → 释义为 "n. 苹果"）。
-    批内英文单词重复时保留首个，后续行计入错误。
+    单词行（hello 你好）行为与旧版一致；含空格的英文短语（a lot of 很多）
+    按中文起点切分。批内英文重复时保留首个，后续行计入错误。
 
     Returns:
         (entries, errors)：entries 为 [(word, translation), ...]；
@@ -42,12 +84,15 @@ def parse_batch_text(text: str) -> Tuple[List[Tuple[str, str]], List[Tuple[int, 
         line = raw.strip()
         if not line:
             continue
-        parts = _BATCH_SEP_RE.split(line, maxsplit=1)
-        if len(parts) < 2 or not parts[1].strip():
-            errors.append((line_no, '缺少释义'))
+        pair = _split_batch_line(line)
+        if pair is None:
+            # 区分缺英文 / 缺释义，便于批量粘贴时定位问题行
+            reason = ('缺少英文单词' if _BATCH_FIRST_CJK_RE.search(line)
+                      else '缺少释义')
+            errors.append((line_no, reason))
             continue
-        word = parts[0].strip()
-        translation = ' '.join(parts[1].split())  # 规整释义内空白
+        word, translation = pair
+        translation = ' '.join(translation.split())  # 规整释义内空白
         if word in seen:
             errors.append((line_no, f'批内重复: {word}'))
             continue
@@ -124,6 +169,7 @@ class WordLibraryTab(QWidget):
         target_layout.addWidget(self.new_unit_radio)
         self.new_unit_edit = QLineEdit()
         self.new_unit_edit.setPlaceholderText("输入新单元名称")
+        self.new_unit_edit.setMaximumWidth(360)   # 窗口拉宽时输入框不应无限拉伸
         new_row = QHBoxLayout()
         new_row.addSpacing(20)
         new_row.addWidget(self.new_unit_edit)
@@ -131,11 +177,19 @@ class WordLibraryTab(QWidget):
 
         target_layout.addWidget(self.existing_unit_radio)
         self.existing_unit_combo = QComboBox()
+        self.existing_unit_combo.setMaximumWidth(360)
         self.existing_unit_combo.addItems(db.get_unit_names())
         existing_row = QHBoxLayout()
         existing_row.addSpacing(20)
         existing_row.addWidget(self.existing_unit_combo)
         target_layout.addLayout(existing_row)
+
+        # 单选切换时联动禁用另一路输入：未选中的一路保持可编辑会误导用户
+        # （保存走的是 radio 状态，不看哪个输入框里有内容）
+        self.new_unit_radio.toggled.connect(self.new_unit_edit.setEnabled)
+        self.existing_unit_radio.toggled.connect(self.existing_unit_combo.setEnabled)
+        self.new_unit_edit.setEnabled(True)          # 与默认勾选态一致
+        self.existing_unit_combo.setEnabled(False)
 
         layout.addWidget(target_group)
 
@@ -145,15 +199,22 @@ class WordLibraryTab(QWidget):
 
         self.word_edit = QLineEdit()
         self.word_edit.setPlaceholderText("英文单词")
+        self.word_edit.setMaximumWidth(360)
         input_form.addRow("英文单词:", self.word_edit)
 
         self.translation_edit = QLineEdit()
         self.translation_edit.setPlaceholderText("中文释义")
+        self.translation_edit.setMaximumWidth(360)
         input_form.addRow("中文释义:", self.translation_edit)
 
+        # 添加到暂存：内容宽、与输入框左缘对齐（空标签占位缩进），
+        # 视觉层级低于「保存到词库」，不再横贯整行
         add_btn = QPushButton("添加到暂存")
         add_btn.clicked.connect(self._add_to_staging)
-        input_form.addRow(add_btn)
+        add_row = QHBoxLayout()
+        add_row.addWidget(add_btn)
+        add_row.addStretch(1)
+        input_form.addRow("", add_row)
 
         layout.addWidget(input_group)
 
@@ -161,7 +222,8 @@ class WordLibraryTab(QWidget):
         batch_group = QGroupBox("批量导入")
         batch_layout = QVBoxLayout(batch_group)
 
-        batch_hint = QLabel("每行一个单词，格式「英文 释义」（空格 / Tab / 逗号分隔），"
+        batch_hint = QLabel("每行一条，格式「英文 释义」。分隔符：Tab / | / 冒号 / 逗号 / 分号 / 「 - 」；"
+                            "无分隔符时按首个中文自动切分（支持 a lot of 等含空格短语）。"
                             "解析后进入下方暂存列表，保存时统一校验")
         batch_hint.setWordWrap(True)
         batch_layout.addWidget(batch_hint)
@@ -173,14 +235,19 @@ class WordLibraryTab(QWidget):
 
         batch_btn_row = QHBoxLayout()
         from_file_btn = QPushButton("从文件导入…")
+        from_file_btn.setToolTip("从文本文件载入词表（支持 UTF-8 / GBK 编码）")
         from_file_btn.clicked.connect(self._import_from_file)
         batch_btn_row.addWidget(from_file_btn)
 
         parse_btn = QPushButton("解析加入暂存")
+        parse_btn.setToolTip("按「英文 释义」逐行解析并加入暂存；"
+                             "分隔符：Tab / | / 冒号 / 逗号 / 分号 / 「 - 」，"
+                             "无分隔符时按首个中文自动切分（支持英文短语）")
         parse_btn.clicked.connect(self._parse_batch)
         batch_btn_row.addWidget(parse_btn)
 
         clear_text_btn = QPushButton("清空文本")
+        clear_text_btn.setToolTip("清空批量导入文本框（不影响暂存列表）")
         clear_text_btn.clicked.connect(self._clear_batch_text)
         batch_btn_row.addWidget(clear_text_btn)
         batch_btn_row.addStretch(1)
@@ -205,9 +272,8 @@ class WordLibraryTab(QWidget):
         btn_row.addWidget(clear_staging_btn)
 
         save_btn = QPushButton("保存到词库")
-        save_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }"
-        )
+        save_btn.setProperty("role", "primary")
+        save_btn.setToolTip("将暂存单词写入词库数据库")
         save_btn.clicked.connect(self._save_to_library)
         btn_row.addWidget(save_btn)
 
@@ -242,6 +308,7 @@ class WordLibraryTab(QWidget):
         lib_btn_row.addWidget(delete_btn)
 
         delete_unit_btn = QPushButton("删除整个单元")
+        delete_unit_btn.setToolTip("删除单元及其全部单词，不可恢复")
         delete_unit_btn.clicked.connect(self._delete_unit)
         lib_btn_row.addWidget(delete_unit_btn)
 
@@ -260,22 +327,32 @@ class WordLibraryTab(QWidget):
         self._reload_library_list()
 
         layout.addWidget(library_group)
-
-        # ── 状态栏 ──
-        self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: gray;")
-        layout.addWidget(self.status_label)
-
         layout.addStretch(1)
         scroll.setWidget(inner)
-        outer.addWidget(scroll)
+        outer.addWidget(scroll)   # scroll 无 parent，必须显式加入布局，否则随局部引用消失而被析构
+
+        # ── 状态栏 ──
+        # 固定于滚动区之外的底部：默认视口只能看到页面上半部分，
+        # 状态反馈若放进滚动内容里，保存/删除的成败提示会落在折叠线以下不可见。
+        self.status_label = QLabel("")
+        self.status_label.setProperty("status", "muted")
+        self.status_label.setWordWrap(True)
+        outer.addWidget(self.status_label)
 
     # ── 内部方法 ─────────────────────────────────────────────────────
 
     def _set_status(self, text: str, color: str):
-        """更新状态提示（red=错误 / green=成功 / gray=中性）"""
+        """更新状态提示（red=错误 / green=成功 / gray=中性）。
+
+        调用方沿用旧色名，这里翻译为集中样式表的 status 属性；
+        运行时改属性需 unpolish/polish 让属性选择器重新求值。
+        """
+        mapping = {"red": "danger", "green": "success", "gray": "muted"}
         self.status_label.setText(text)
-        self.status_label.setStyleSheet(f"color: {color};")
+        self.status_label.setProperty("status", mapping.get(color, "muted"))
+        style = self.status_label.style()
+        style.unpolish(self.status_label)
+        style.polish(self.status_label)
 
     def _add_to_staging(self):
         """将当前输入的单词添加到暂存列表"""

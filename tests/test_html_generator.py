@@ -45,16 +45,23 @@ def test_no_separator_when_only_review():
 
 
 def test_multiple_days_page_breaks():
-    """2 页 → 恰 1 个外层显式分页符 div（非 CSS 里的）。"""
+    """分页由 .page 的 CSS 规则驱动；<body> 内不得出现任何分页空 div
+    （空 div 会在分页后再强制分页一次，打印出整页空白）。"""
     plans = [
         DayPlan(1, [WordEntry('a', '甲', 'U1')], []),
         DayPlan(2, [WordEntry('b', '乙', 'U1')], [])
     ]
     html = build_full_document(plans, 1, 1, 0)
-    # 搜索外层分页 div（不在 <style> 内）
+    # 分页规则只应存在于 <style> 块内
     style_end = html.index('</style>')
     body_part = html[style_end:]
-    assert '<div style="page-break-after: always;"></div>' in body_part
+    assert 'page-break-after' not in body_part
+    assert 'break-after' not in body_part
+    # CSS 内同时写新旧两种分页属性，且末页不强制分页
+    style_part = html[:style_end]
+    assert 'page-break-after: always' in style_part
+    assert 'break-after: page' in style_part
+    assert re.search(r'\.page:last-child\s*\{[^}]*break-after:\s*auto', style_part)
 
 
 def test_on_progress_invoked_per_day():
