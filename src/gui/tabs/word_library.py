@@ -40,6 +40,31 @@ _BATCH_POS_TOKEN_RE = re.compile(
     re.IGNORECASE)
 
 
+def _find_explicit_sep(line: str) -> Optional[re.Match]:
+    """最左显式分隔符；成对 ASCII 括号内的候选不算分隔符。
+
+    "kilo (= kilogram, kilogramme), 千克" 这类词表行中，括号内的逗号
+    是词条内部标点，生效分隔符是括号外的 ", "。括号不配对或行内无
+    括号时按原文搜索（与旧行为一致）。
+    """
+    m = _BATCH_EXPLICIT_SEP_RE.search(line)
+    if m is None or '(' not in line:
+        return m
+    if line.count('(') != line.count(')'):
+        return m   # 括号不配对：放弃括号感知，按原文搜索
+    depth = 0
+    for i, ch in enumerate(line):
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            hit = _BATCH_EXPLICIT_SEP_RE.match(line, i)
+            if hit is not None:
+                return hit
+    return None
+
+
 def _split_tab_columns(line: str) -> Optional[Tuple[str, str]]:
     """多列 Tab 行的归并切分（PDF/Excel 复制词表的常见形态）。
 
@@ -48,7 +73,9 @@ def _split_tab_columns(line: str) -> Optional[Tuple[str, str]]:
     - 仅当行含 Tab、首个 Tab 在首个中文之前、且最左显式分隔符就是 Tab
       时进入本分支，否则返回 None 交回原有规则（保证非 Tab 行零变化）；
     - 丢弃开头的纯数字列（表格行号）；
-    - 首个含中文的列起为释义段；
+    - 首个含中文的列起为释义段；中文列开头若混有英文片段（如 Tab 切在
+      短语中间的 "for<TAB>example, 例如"），且该片段不是词性标注，则
+      归并回单词侧；
     - 前段其余列：词性标记列归入释义开头（与 "apple n. 苹果" 行约定
       一致，保证 across<TAB>prep.<TAB>在对面 行为不变），纯英文列用
       单个空格归并回单词侧。
@@ -59,7 +86,7 @@ def _split_tab_columns(line: str) -> Optional[Tuple[str, str]]:
     cjk = _BATCH_FIRST_CJK_RE.search(line)
     if cjk is not None and first_tab > cjk.start():
         return None   # 首个 Tab 在中文之后：Tab 只是释义内空白，不参与切分
-    sep = _BATCH_EXPLICIT_SEP_RE.search(line)
+    sep = _find_explicit_sep(line)
     if sep is None or '\t' not in sep.group():
         return None   # 最左显式分隔符不是 Tab（如竖线）：交给原有规则
     cols = [c.strip() for c in line.split('\t')]
@@ -83,6 +110,16 @@ def _split_tab_columns(line: str) -> Optional[Tuple[str, str]]:
             pos_tokens.append(col)
         else:
             en = f'{en} {col}'
+    # 中文列开头混入的英文片段（首个中文之前的部分）归并回单词侧；
+    # 词性标注（n. / prep. 等）除外，仍留在释义开头
+    first_zh = zh_cols[0]
+    cjk_in_col = _BATCH_FIRST_CJK_RE.search(first_zh)
+    prefix = first_zh[:cjk_in_col.start()].strip()
+    if prefix and not _BATCH_POS_TOKEN_RE.match(prefix):
+        prefix = prefix.rstrip(',，;；:：、').strip()
+        if prefix:
+            en = f'{en} {prefix}'
+            zh_cols = [first_zh[cjk_in_col.start():]] + zh_cols[1:]
     zh = ' '.join(pos_tokens + zh_cols)
     return en, ' '.join(zh.split())
 
@@ -92,9 +129,11 @@ def _split_batch_line(line: str) -> Optional[Tuple[str, str]]:
 
     规则（从强到弱）：
     1. 多列 Tab 行（PDF/Excel 复制常见，短语被切成多列）：纯英文列归并
-       回单词侧、词性标记列归释义开头，首个含中文的列起为释义；
-    2. 显式分隔符：仅当首个分隔符出现在首个 CJK 字符之前才生效——
-       释义内部的逗号/分号（如 "n. 苹果, 一种水果"）不属于分隔符；
+       回单词侧、词性标记列归释义开头，首个含中文的列起为释义（中文列
+       开头混入的英文片段同样归并回单词侧）；
+    2. 显式分隔符（括号内的候选不算）：仅当首个分隔符出现在首个 CJK
+       字符之前才生效——释义内部的逗号/分号（如 "n. 苹果, 一种水果"）
+       不属于分隔符；
     3. 词性标注行（apple n. 苹果）：按第一个空格切，标注留在释义中；
     4. CJK 回退：英文短语可含空格，中英分界由中文起点而非空格决定
        （a lot of 很多 → a lot of + 很多）。
@@ -102,7 +141,7 @@ def _split_batch_line(line: str) -> Optional[Tuple[str, str]]:
     tab_result = _split_tab_columns(line)
     if tab_result is not None:
         return tab_result
-    sep = _BATCH_EXPLICIT_SEP_RE.search(line)
+    sep = _find_explicit_sep(line)
     cjk = _BATCH_FIRST_CJK_RE.search(line)
     if sep and (cjk is None or sep.start() < cjk.start()):
         en, zh = line[:sep.start()], line[sep.end():]

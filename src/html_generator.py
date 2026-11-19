@@ -5,11 +5,6 @@ from typing import List, Optional, Callable, Set
 from src.word_selector import DayPlan, WordEntry
 
 
-# 每页（.page）最大答题行数：固定容量，确保表头、统计行与签名区绝不被
-# 挤出页面造成重叠。某天总词数超过此值时自动拆分为多个页面。
-MAX_ROWS_PER_PAGE = 20
-
-
 # ── CSS 样式（从 main_window.py 原样搬移） ──────────────────────────────
 
 _CSS = """\
@@ -32,8 +27,9 @@ _CSS = """\
         @media print {
             .page {
                 /* 打印时高度自适应：固定 297mm 会在行数超限时把统计行/签名区
-                   叠印到表格上；改为 auto 交给浏览器按内容自然分页，行数上限
-                   由 MAX_ROWS_PER_PAGE 从数据层严格控制。顶对齐，不再上下撑开 */
+                   叠印到表格上；改为 auto 交给浏览器按内容自然分页。每天一个
+                   .page，续页表头由 <thead> 自动重复，行不被截断（见下方 tr
+                   的 break-inside 规则）。顶对齐，不再上下撑开 */
                 min-height: 0;
                 height: auto;
                 box-sizing: border-box;
@@ -53,7 +49,7 @@ _CSS = """\
             min-height: 297mm; /* A4纸高度（仅屏幕预览；打印时上方 @media print 规则覆盖） */
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
         .header {
             text-align: center;
@@ -79,6 +75,11 @@ _CSS = """\
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
+        }
+        tr {
+            /* 打印分页由浏览器自然进行：行内绝不截断（跨页只能整行下移） */
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
         th {
             background-color: #f0f8ff;
@@ -123,7 +124,8 @@ _CSS = """\
             font-size: 13px;
         }
         .signature-section {
-            margin-top: 30px;
+            /* 日期/签名栏位于标题正下方（表格之后会被分页挤成孤行） */
+            margin-top: 0;
             display: flex;
             justify-content: flex-end;
             align-items: flex-end;
@@ -192,44 +194,72 @@ _HTML_TAIL = """
 # ── 单页渲染 ────────────────────────────────────────────────────────────
 
 def generate_day_page(plan: DayPlan) -> str:
-    """渲染一天的听写页面（词数超过 MAX_ROWS_PER_PAGE 时含多个 .page）。
+    """渲染一天的听写页面（单个 .page；打印分页完全交由浏览器自然进行）。
 
-    不做任何截断：重点词与复习词拼接成有序列表后按 MAX_ROWS_PER_PAGE
-    切块，每块渲染为一个完整页面。
+    不做任何截断也不做程序内分块：重点词与复习词拼接成有序列表后全部
+    渲染进同一个 .page。打印时浏览器按物理页高自然断页——<thead> 在
+    续页自动重复表头，行级 break-inside: avoid 保证任何一行不被从中间
+    截断，序号跨页连续。
 
-    - 首页标题“第N天”，后续页标题“第N天（续）”，每页均含表头 <thead>；
-    - 序号跨页连续（重点词接复习词，不重置）；
-    - “复习单词”分隔行只在包含第一条复习词的页出现，且紧邻该行之前；
-    - “今日总计”统计行与签名栏只在最后一页出现。
+    - 标题“第N天”；“复习单词”分隔行插在全局第一条复习词之前；
+    - “今日总计”统计行在表尾；
+    - 日期/签名栏固定在标题正下方：若放在表格之后，表格恰好填满页面时
+      会被挤成孤行页（历史缺陷），放在顶部则不受分页影响。
 
     Args:
         plan: 该天的 DayPlan（含 focus_words / review_words）。
 
     Returns:
-        HTML 字符串片段（可能含多个 <div class="page">）。
+        HTML 字符串片段（一个 <div class="page">）。
     """
     total_words = len(plan.focus_words) + len(plan.review_words)
-    # 重点 + 复习拼接成有序列表：序号天然连续（重点在前、复习在后），统一切块
-    all_words = list(plan.focus_words) + list(plan.review_words)
-
-    # 按 MAX_ROWS_PER_PAGE 切片；无词时保留单页结构（与原行为一致）
-    chunks = [all_words[i:i + MAX_ROWS_PER_PAGE]
-              for i in range(0, len(all_words), MAX_ROWS_PER_PAGE)] or [[]]
-
     first_review_idx = len(plan.focus_words)  # 第一条复习词的全局下标
 
-    html = ""
-    rendered_rows = 0
-    for chunk_idx, chunk in enumerate(chunks):
-        is_last_page = chunk_idx == len(chunks) - 1
-        page_title = (f"第{plan.day_num}天" if chunk_idx == 0
-                      else f"第{plan.day_num}天（续）")
-        start = chunk_idx * MAX_ROWS_PER_PAGE  # 本页首行的全局下标
+    rows = ""
+    for global_idx, item in enumerate(list(plan.focus_words)
+                                      + list(plan.review_words)):
+        is_review = global_idx >= first_review_idx
+        row_num = global_idx + 1  # 序号跨页连续，不重置
 
-        page = f"""
+        # 分隔行：仅插在全局第一条复习词之前
+        if is_review and plan.focus_words and global_idx == first_review_idx:
+            rows += """
+                    <tr class="separator-row">
+                        <td colspan="5" class="section-title">复习单词</td>
+                    </tr>
+            """
+
+        row_class = "review-row" if is_review else "focus-row"
+        rows += f"""
+                <tr class="{row_class}">
+                    <td>{row_num}</td>
+                    <td class="word-cell">
+
+                    </td>
+                    <td>{item.translation}</td>
+                    <td>{item.unit}</td>
+                    <td class="correction-cell"></td>
+                </tr>
+        """
+
+    # 断言校验：渲染行数必须等于当天实际单词数，不一致时报错而非静默生成
+    rendered_rows = (rows.count('class="focus-row"')
+                     + rows.count('class="review-row"'))
+    assert rendered_rows == total_words, (
+        f"答题行数({rendered_rows})与当天单词数({total_words})不一致，"
+        f"第{plan.day_num}天生成异常"
+    )
+
+    page = f"""
         <div class="page">
             <div class="header">
-                <h1>英语单词听写练习 {page_title}</h1>
+                <h1>英语单词听写练习 第{plan.day_num}天</h1>
+            </div>
+
+            <div class="signature-section">
+                <div class="signature-right">
+                    <div>日期: _______________</div>
+                </div>
             </div>
 
             <table>
@@ -244,69 +274,20 @@ def generate_day_page(plan: DayPlan) -> str:
                 </thead>
                 <tbody>
     """
-
-        for offset, item in enumerate(chunk):
-            global_idx = start + offset
-            is_review = global_idx >= first_review_idx
-            row_num = global_idx + 1  # 序号跨页连续，不重置
-
-            # 分隔行：仅插在本页内第一条复习词（即全局第一条复习词）之前
-            if is_review and plan.focus_words and global_idx == first_review_idx:
-                page += """
-                    <tr class="separator-row">
-                        <td colspan="5" class="section-title">复习单词</td>
-                    </tr>
-            """
-
-            row_class = "review-row" if is_review else "focus-row"
-            page += f"""
-                    <tr class="{row_class}">
-                        <td>{row_num}</td>
-                        <td class="word-cell">
-
-                        </td>
-                        <td>{item.translation}</td>
-                        <td>{item.unit}</td>
-                        <td class="correction-cell"></td>
-                    </tr>
-            """
-
-        # 统计行 + 签名栏：仅最后一页；其余页直接收尾表格
-        if is_last_page:
-            page += f"""
+    if total_words:
+        page += rows
+        page += f"""
                     <tr class="stats-row">
                         <td colspan="2" class="total-label">今日总计</td>
                         <td colspan="3" class="total-value">{total_words}个单词</td>
                     </tr>
-                </tbody>
-            </table>
-
-            <div class="signature-section">
-                <div class="signature-right">
-                    <div>日期: _______________</div>
-                </div>
-            </div>
-        </div>
     """
-        else:
-            page += """
+    page += """
                 </tbody>
             </table>
         </div>
     """
-
-        # 各块渲染行数累加，供末尾与当天单词总数核对
-        rendered_rows += (page.count('class="focus-row"')
-                          + page.count('class="review-row"'))
-        html += page
-
-    # 断言校验：各块渲染行数之和必须等于当天实际单词数，不一致时报错而非静默生成
-    assert rendered_rows == total_words, (
-        f"答题行数({rendered_rows})与当天单词数({total_words})不一致，"
-        f"第{plan.day_num}天生成异常"
-    )
-
-    return html
+    return page
 
 
 def generate_answer_page(day_plans: List[DayPlan]) -> str:

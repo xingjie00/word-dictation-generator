@@ -182,6 +182,46 @@ def test_multi_column_tab_mixed_with_normal_lines():
     assert errors == []
 
 
+def test_tab_inside_phrase_merges_ascii_prefix():
+    """Tab 切在短语中间、尾部列含英文+中文：英文片段归并回单词侧。"""
+    entries, errors = parse_batch_text("for\texample, 例如")
+    assert entries == [('for example', '例如')]
+    assert errors == []
+
+
+def test_tab_inside_phrase_various_shapes():
+    """同类形态：make use of / take a photo / National Day。"""
+    entries, _ = parse_batch_text(
+        "make\tuse of, 使用\ntake\ta photo, 拍照\nNational\tDay, 国庆节")
+    assert entries == [('make use of', '使用'),
+                       ('take a photo', '拍照'),
+                       ('National Day', '国庆节')]
+
+
+def test_tab_before_paren_translation():
+    """Tab 切在单词后、释义以 (= 同义词) 开头：括号段归并回单词侧。"""
+    entries, _ = parse_batch_text("gym\t(= gymnasium), 体育馆")
+    assert entries == [('gym (= gymnasium)', '体育馆')]
+
+
+def test_comma_inside_parens_not_a_separator():
+    """无 Tab 行：括号内的逗号是词条内部标点，不参与切分。"""
+    entries, _ = parse_batch_text("kilo (= kilogram, kilogramme), 千克；公斤")
+    assert entries == [('kilo (= kilogram, kilogramme)', '千克；公斤')]
+
+
+def test_pos_token_in_mixed_column_stays_in_translation():
+    """中文列开头是词性标注（n. 等）时不归并回单词侧。"""
+    entries, _ = parse_batch_text("apple\tn. 苹果")
+    assert entries == [('apple', 'n. 苹果')]
+
+
+def test_paren_aware_separator_keeps_plain_lines_unchanged():
+    """无括号 / 中文括号行不受括号感知逻辑影响。"""
+    entries, _ = parse_batch_text("cat,猫\napple 苹果（一种水果）")
+    assert entries == [('cat', '猫'), ('apple', '苹果（一种水果）')]
+
+
 def test_export_round_trip_as_seed(tmp_path):
     """导出的 JSON 可直接作为种子文件重建词库（格式与 words.json 同构）。"""
     d = str(tmp_path / "words.db")
