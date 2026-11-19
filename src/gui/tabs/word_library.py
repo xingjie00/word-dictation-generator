@@ -9,7 +9,7 @@ import os
 import re
 import sqlite3
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QDialog,
@@ -40,16 +40,68 @@ _BATCH_POS_TOKEN_RE = re.compile(
     re.IGNORECASE)
 
 
+def _split_tab_columns(line: str) -> Optional[Tuple[str, str]]:
+    """多列 Tab 行的归并切分（PDF/Excel 复制词表的常见形态）。
+
+    此类行会把英文短语切成多个 Tab 列（如 across<TAB>from<TAB>在对面），
+    旧规则取首个 Tab 前的 "across" 当单词，短语其余部分被并进释义。规则：
+    - 仅当行含 Tab、首个 Tab 在首个中文之前、且最左显式分隔符就是 Tab
+      时进入本分支，否则返回 None 交回原有规则（保证非 Tab 行零变化）；
+    - 丢弃开头的纯数字列（表格行号）；
+    - 首个含中文的列起为释义段；
+    - 前段其余列：词性标记列归入释义开头（与 "apple n. 苹果" 行约定
+      一致，保证 across<TAB>prep.<TAB>在对面 行为不变），纯英文列用
+      单个空格归并回单词侧。
+    """
+    first_tab = line.find('\t')
+    if first_tab < 0:
+        return None
+    cjk = _BATCH_FIRST_CJK_RE.search(line)
+    if cjk is not None and first_tab > cjk.start():
+        return None   # 首个 Tab 在中文之后：Tab 只是释义内空白，不参与切分
+    sep = _BATCH_EXPLICIT_SEP_RE.search(line)
+    if sep is None or '\t' not in sep.group():
+        return None   # 最左显式分隔符不是 Tab（如竖线）：交给原有规则
+    cols = [c.strip() for c in line.split('\t')]
+    cols = [c for c in cols if c]
+    while cols and cols[0].isdigit():   # 表格行号列
+        cols.pop(0)
+    if not cols:
+        return None
+    zh_start = None
+    for i, col in enumerate(cols):
+        if _BATCH_FIRST_CJK_RE.search(col):
+            zh_start = i
+            break
+    if zh_start is None or zh_start == 0:   # 无中文列 / 无英文列：交回原有规则
+        return None
+    pre, zh_cols = cols[:zh_start], cols[zh_start:]
+    en = pre[0]
+    pos_tokens = []
+    for col in pre[1:]:
+        if _BATCH_POS_TOKEN_RE.match(col):
+            pos_tokens.append(col)
+        else:
+            en = f'{en} {col}'
+    zh = ' '.join(pos_tokens + zh_cols)
+    return en, ' '.join(zh.split())
+
+
 def _split_batch_line(line: str) -> Optional[Tuple[str, str]]:
     """切分一行「英文 释义」为二元组；无法切分时返回 None。
 
     规则（从强到弱）：
-    1. 显式分隔符：仅当首个分隔符出现在首个 CJK 字符之前才生效——
+    1. 多列 Tab 行（PDF/Excel 复制常见，短语被切成多列）：纯英文列归并
+       回单词侧、词性标记列归释义开头，首个含中文的列起为释义；
+    2. 显式分隔符：仅当首个分隔符出现在首个 CJK 字符之前才生效——
        释义内部的逗号/分号（如 "n. 苹果, 一种水果"）不属于分隔符；
-    2. 词性标注行（apple n. 苹果）：按第一个空格切，标注留在释义中；
-    3. CJK 回退：英文短语可含空格，中英分界由中文起点而非空格决定
+    3. 词性标注行（apple n. 苹果）：按第一个空格切，标注留在释义中；
+    4. CJK 回退：英文短语可含空格，中英分界由中文起点而非空格决定
        （a lot of 很多 → a lot of + 很多）。
     """
+    tab_result = _split_tab_columns(line)
+    if tab_result is not None:
+        return tab_result
     sep = _BATCH_EXPLICIT_SEP_RE.search(line)
     cjk = _BATCH_FIRST_CJK_RE.search(line)
     if sep and (cjk is None or sep.start() < cjk.start()):
@@ -116,6 +168,21 @@ def build_export_data(data: Dict) -> Dict:
     return {'word_list': word_list}
 
 
+def split_new_and_existing(staging: List[Tuple[str, str]],
+                           existing_words: Set[str]
+                           ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """按精确匹配把暂存拆成 (to_save, skipped) 两部分。
+
+    已存在于 existing_words 的条目进入 skipped（不重复入库），
+    其余按原顺序进入 to_save。纯函数，便于单测。
+    """
+    to_save: List[Tuple[str, str]] = []
+    skipped: List[Tuple[str, str]] = []
+    for pair in staging:
+        (skipped if pair[0] in existing_words else to_save).append(pair)
+    return to_save, skipped
+
+
 class _EditWordDialog(QDialog):
     """编辑已入库单词的模态对话框（英文 + 释义）。"""
 
@@ -143,6 +210,9 @@ class WordLibraryTab(QWidget):
         super().__init__(parent)
         self.on_data_changed = on_data_changed  # 词库变更后的回调
         self.staging: List[Tuple[str, str]] = []  # 暂存：[(word, translation), ...]
+        # 最近一次保存的写库明细：已保存条目与因已存在而跳过的条目
+        self._pending_save: List[Tuple[str, str]] = []
+        self._pending_skipped: List[Tuple[str, str]] = []
         self._build_ui()
 
     def _build_ui(self):
@@ -223,8 +293,9 @@ class WordLibraryTab(QWidget):
         batch_layout = QVBoxLayout(batch_group)
 
         batch_hint = QLabel("每行一条，格式「英文 释义」。分隔符：Tab / | / 冒号 / 逗号 / 分号 / 「 - 」；"
-                            "无分隔符时按首个中文自动切分（支持 a lot of 等含空格短语）。"
-                            "解析后进入下方暂存列表，保存时统一校验")
+                            "无分隔符时按首个中文自动切分（支持 a lot of 等含空格短语）；"
+                            "多列 Tab 行会把英文列归并回单词。解析后进入下方暂存列表，"
+                            "保存时已存在的单词自动跳过")
         batch_hint.setWordWrap(True)
         batch_layout.addWidget(batch_hint)
 
@@ -242,7 +313,8 @@ class WordLibraryTab(QWidget):
         parse_btn = QPushButton("解析加入暂存")
         parse_btn.setToolTip("按「英文 释义」逐行解析并加入暂存；"
                              "分隔符：Tab / | / 冒号 / 逗号 / 分号 / 「 - 」，"
-                             "无分隔符时按首个中文自动切分（支持英文短语）")
+                             "无分隔符时按首个中文自动切分（支持英文短语），"
+                             "多列 Tab 行会把英文列归并回单词")
         parse_btn.clicked.connect(self._parse_batch)
         batch_btn_row.addWidget(parse_btn)
 
@@ -509,31 +581,48 @@ class WordLibraryTab(QWidget):
         except (sqlite3.IntegrityError, OSError):
             self._set_status("❌ 保存失败，请检查数据或文件权限", "red")
             return False
+        self._pending_save = list(self.staging)
+        self._pending_skipped = []
         return True
 
     def _save_existing_unit(self, unit_name: str) -> bool:
-        """保存到已有单元；失败时更新状态提示并返回 False。"""
+        """保存到已有单元：跳过已存在的词，保存其余（单事务）。
+
+        全部已存在时不写库、暂存原样保留；部分已存在时保存其余条目，
+        被跳过条目由 _after_save 保留在暂存（如需更新释义，请在已入库
+        列表中用「修改所选」编辑）。
+        """
         try:
-            # 一次性报出全部重复词（与旧版行为一致）
             existing = {w['word'] for w in db.get_unit_words(unit_name)}
-            duplicates = [w for w, _ in self.staging if w in existing]
-            if duplicates:
-                dup_str = "、".join(duplicates)
-                self._set_status(f"⚠️ 单元内已有重复单词: {dup_str}", "red")
+            to_save, skipped = split_new_and_existing(self.staging, existing)
+            if not to_save:
+                dup_str = "、".join(w for w, _ in skipped)
+                self._set_status(
+                    f"⚠️ 暂存的 {len(skipped)} 条均已存在于 \"{unit_name}\" 中，"
+                    f"无新增内容：{dup_str}（如需更新释义，请在已入库列表中"
+                    f"修改所选；或从暂存移除）",
+                    "red")
                 return False
-            if not db.add_words(unit_name, self.staging):
+            if not db.add_words(unit_name, to_save):
                 self._set_status("⚠️ 未找到该单元，请重新选择", "red")
                 return False
         except (sqlite3.IntegrityError, OSError):
             self._set_status("❌ 保存失败，请检查数据或文件权限", "red")
             return False
+        self._pending_save = to_save
+        self._pending_skipped = skipped
         return True
 
     def _after_save(self, unit_name: str):
-        """保存成功后的清理和通知"""
-        # 清空暂存
-        self.staging.clear()
-        self.staging_list.clear()
+        """保存成功后的清理和通知（仅移除已保存的暂存项，被跳过项保留）"""
+        # 同步移除已保存条目（staging 与列表控件按下标对齐，从后往前删避免行号漂移）
+        saved_words = {w for w, _ in self._pending_save}
+        removed_rows = [row for row, (w, _) in enumerate(self.staging)
+                        if w in saved_words]
+        self.staging[:] = [(w, t) for w, t in self.staging
+                           if w not in saved_words]
+        for row in sorted(removed_rows, reverse=True):
+            self.staging_list.takeItem(row)
         # 新单元模式清空名称输入
         if self.new_unit_radio.isChecked():
             self.new_unit_edit.clear()
@@ -545,8 +634,15 @@ class WordLibraryTab(QWidget):
         # 通知主窗口
         if self.on_data_changed:
             self.on_data_changed()
-        # 状态提示
-        self._set_status(f"✅ 已保存到 \"{unit_name}\"", "green")
+        # 状态提示（含跳过明细）
+        n, m = len(self._pending_save), len(self._pending_skipped)
+        if m == 0:
+            self._set_status(f"✅ 已保存 {n} 条到 \"{unit_name}\"", "green")
+        else:
+            dup_str = "、".join(w for w, _ in self._pending_skipped)
+            self._set_status(
+                f"✅ 已保存 {n} 条到 \"{unit_name}\"；{m} 条已存在于该单元，"
+                f"未重复保存：{dup_str}（保留在暂存）", "green")
 
     # ── 已入库单词的修改 / 删除 ─────────────────────────────────────
 

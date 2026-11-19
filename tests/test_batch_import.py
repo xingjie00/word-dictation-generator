@@ -116,6 +116,72 @@ def test_build_export_data_strips_runtime_fields():
     ]}
 
 
+def test_multi_column_tab_merges_english_phrase():
+    """多列 Tab 行（PDF/Excel 复制）：短语内含 Tab 时英文列归并回单词侧。"""
+    entries, errors = parse_batch_text("across\tfrom\t在对面")
+    assert entries == [('across from', '在对面')]
+    assert errors == []
+
+
+def test_multi_column_tab_pos_column_kept_in_translation():
+    """多列 Tab 行中间是词性标注时：词性归入释义，单词侧不被污染。"""
+    entries, errors = parse_batch_text("across\tprep.\t在对面")
+    assert entries == [('across', 'prep. 在对面')]
+    assert errors == []
+
+
+def test_multi_column_tab_row_number_column_dropped():
+    """带表格行号列的 Tab 行：行号被丢弃，不进入英文侧。"""
+    entries, errors = parse_batch_text("1\tacross\t在对面")
+    assert entries == [('across', '在对面')]
+    assert errors == []
+
+
+def test_two_column_tab_unchanged():
+    """普通两列 Tab 行行为不变。"""
+    entries, errors = parse_batch_text("apple\t苹果\nacross from\t在对面")
+    assert entries == [('apple', '苹果'), ('across from', '在对面')]
+    assert errors == []
+
+
+def test_multi_column_tab_extra_zh_columns_joined():
+    """多列释义：全部中文列合并为一条释义。"""
+    entries, errors = parse_batch_text("book\t书\t课本")
+    assert entries == [('book', '书 课本')]
+    assert errors == []
+
+
+def test_non_tab_separator_takes_priority_over_tab_split():
+    """最左显式分隔符不是 Tab（如竖线）时交回原有规则，Tab 只是释义内空白。"""
+    entries, errors = parse_batch_text("across|from\t在对面")
+    assert entries == [('across', 'from 在对面')]
+    assert errors == []
+
+
+def test_leading_tab_column_stripped():
+    """行首 Tab（复制表格时常见）：空列被去除后正常解析。"""
+    entries, errors = parse_batch_text("\tacross\t中文")
+    assert entries == [('across', '中文')]
+    assert errors == []
+
+
+def test_no_tab_lines_still_use_original_rules():
+    """无 Tab 行回归抽查：空格分隔与短语切分不受多列逻辑影响。"""
+    entries, errors = parse_batch_text("apple 苹果\na lot of 很多")
+    assert entries == [('apple', '苹果'), ('a lot of', '很多')]
+    assert errors == []
+
+
+def test_multi_column_tab_mixed_with_normal_lines():
+    """多列 Tab 行与普通行混排：逐行独立解析。"""
+    entries, errors = parse_batch_text(
+        "across\tfrom\t在对面\napple 苹果\nbook\t书")
+    assert entries == [('across from', '在对面'),
+                       ('apple', '苹果'),
+                       ('book', '书')]
+    assert errors == []
+
+
 def test_export_round_trip_as_seed(tmp_path):
     """导出的 JSON 可直接作为种子文件重建词库（格式与 words.json 同构）。"""
     d = str(tmp_path / "words.db")
